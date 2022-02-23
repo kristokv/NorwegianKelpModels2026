@@ -170,7 +170,17 @@ obs.points %>% left_join(T_max_df, by = c("ID" = "ID", "Year_HGU" = "TS_year")) 
   mutate(Diff = BO2_tempmax_bdmean - Maxtemp) %>% 
   ggplot(aes(x = Year_HGU, y = Diff, col = Y)) +
   geom_point()
-  
+
+# The Bio-Oracle layers are supposed to be the long-term averages between 2000 and 2014
+# Compare 2000-2014 data to Bio-Oracle
+obs.points %>% left_join(T_max_df, by = c("ID" = "ID", "Year_HGU" = "TS_year")) %>% 
+  filter(Year_HGU %in% c(2000:2014)) %>% 
+  group_by(X, Y) %>% 
+  summarise(BO2 = mean(BO2_tempmax_bdmean, na.rm = TRUE), Maxt = mean(Maxtemp, na.rm = TRUE)) %>% 
+  mutate(Diff = BO2 - Maxt) %>% 
+  ggplot(aes(x = BO2, y = Maxt, col = Diff)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, col = "red", lwd = 1.5)
 
 # Compared to Bio-Oracle, the maximum temperatures seems to generally be higher (negative diff), 
 # and the minimum temperatures generally lower (positive diff).
@@ -201,4 +211,9 @@ Urchindata <- obs.points %>% left_join(Urchin_df, by = c("ID" = "ID", "Year_HGU"
 Urchindata %>% ggplot(aes(x = X, y = Y, col = Grazing)) +
   geom_point()
 
+Urchindata %>% head
+# match these to obs.data
 
+# Not sure what to do about temperature etc...
+
+write.csv(Urchindata, file = "./Data/Urchindata.csv", row.names = FALSE)

@@ -56,4 +56,10 @@ write.csv(obs.points, file = "./Data/obs.points.csv")
 
 # Additional variables in 2022 --------------------------------------------
 
+Urchindata <- read.csv("./Data/Urchindata.csv", stringsAsFactors = FALSE)
 
+saclat2022 <- saclat %>% left_join(Urchindata)
+lamhyp2022 <- lamhyp %>% left_join(Urchindata)
+
+write.csv(saclat2022, file = "./Data/saclat2022.csv", row.names = FALSE)
+write.csv(lamhyp2022, file = "./Data/lamhyp2022.csv", row.names = FALSE)
