@@ -10,6 +10,7 @@
 # Packages ----------------------------------------------------------------
 
 require(tidyverse)
+require(patchwork)
 require(gbm) # Generalized Boosted Regression Models
 require(dismo) # Species Distribution Modeling
 require(corrplot)
@@ -37,7 +38,6 @@ lamhyp %>% dplyr::select(bedpar:BO2_salinitymax_ss, Grazing) %>%
 # Here, decided to test both 
 # 1) log(Tetthet + 1) as response with gaussian distr AND
 # 2) Tetthet*2 as response with poisson distr
-# ... just to be thorough ...
 
 # For reference, see: https://rspatial.org/raster/sdm/9_sdm_brt.html 
 
@@ -118,3 +118,102 @@ plot(lamhyp.full.gaus.gbm$data$y, lamhyp.full.gaus.gbm$fitted)
 abline(a = 0, b = 1, col = "red")
 
 cor(lamhyp.full.gaus.gbm$data$y, lamhyp.full.gaus.gbm$fitted) # pearson correlation
+
+# prediksjoner med fremtidscenario RCP 85
+pred_now <- lamhyp %>% left_join(responsvar) %>% 
+  mutate(Grazing = 0) %>% 
+  predict(lamhyp.full.gaus.gbm, newdata = .)
+
+pred_RCP85_2100 <- lamhyp %>% left_join(responsvar) %>%
+  mutate(Grazing = 0) %>% 
+  left_join(obs.points) %>% 
+  left_join(Future_df) %>% 
+  dplyr::select(-BO2_tempmean_bdmin) %>%
+  mutate(BO2_tempmean_bdmin = RCP85meantemp_2100) %>% 
+  predict(lamhyp.full.gaus.gbm, newdata = .)
+
+par(mfrow = c(1,1))
+plot(pred_now, pred_RCP85_2100)
+abline(a = 0, b = 1, col = "red")
+
+data.frame(lamhyp, 
+           Now = exp(pred_now) -1 , 
+           RCP85 = exp(pred_RCP85_2100) -1) %>% 
+  mutate(Diff = RCP85 - Now) %>% 
+  ggplot(aes(x = X, y = Y, color = Diff)) +
+  geom_point()
+
+# simplify - very slow, perhaps not necessary
+set.seed(23)
+lamhyp.gaus.simp <- gbm.simplify(lamhyp.full.gaus.gbm)
+saveRDS(lamhyp.gaus.simp, file = "./Models/lamhyp.gaus.simp.gbm.rds") 
+# Suggest cutting 7 vars
+
+lamhyp.gaus.simp
+
+# Comparing models --------------------------------------------------------
+
+plot(responsvar$Tetthet, exp(lamhyp.full.gaus.gbm$fitted)-1)
+plot(responsvar$Tetthet, lamhyp.full.poisson.gbm$fitted/2)
+
+p1 <- data.frame(Measured = responsvar$Tetthet,
+           Gausmod  = exp(lamhyp.full.gaus.gbm$fitted)-1,
+           Poismod  = lamhyp.full.poisson.gbm$fitted/2) %>% 
+  pivot_longer(cols = Gausmod:Poismod, names_to = "Model", values_to = "Fitted") %>% 
+  ggplot(aes(x = as.factor(Measured), y = Fitted, col = Model)) +
+  labs(x = "Density categories") +
+  geom_boxplot()
+
+p1
+
+p2 <- lamhyp.full.poisson.gbm$contributions %>% 
+  rename("Poismod" = "rel.inf") %>% 
+  left_join(lamhyp.full.gaus.gbm$contributions) %>% 
+  rename("Gausmod" = "rel.inf") %>% 
+  pivot_longer(cols = Poismod:Gausmod, names_to = "Model", values_to = "Importance") %>% 
+  ggplot(aes(x = reorder(var, Importance), y = Importance, fill = Model)) +
+  geom_bar(stat = "identity", position = "dodge")+
+  coord_flip()+
+  labs(x = "")
+
+p2
+# When temperature is this important, using historic temperature data may be important 
+
+p3 <- data.frame(Depth = lamhyp$Depth_mod,
+           SWM_10K = lamhyp$swm/10000,
+           Tempmean = lamhyp$BO2_tempmean_bdmin,
+           Bedpar = lamhyp$bedpar,
+           Measured = responsvar$Tetthet,
+           Gausmod  = exp(lamhyp.full.gaus.gbm$fitted)-1,
+           Poismod  = lamhyp.full.poisson.gbm$fitted/2) %>% 
+  pivot_longer(cols = Gausmod:Poismod, names_to = "Model", values_to = "Fitted") %>% 
+  pivot_longer(cols = Depth:Bedpar, names_to = "Envvar") %>% 
+  ggplot(aes(x = value, y = Fitted, col = Model)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "") +
+  facet_wrap(~Envvar, scales = "free")
+
+p4 <- lamhyp %>% ggplot(aes(y = BO2_tempmean_bdmin, x = as.factor(Grazing))) +
+  geom_boxplot() +
+  labs(x = "Grazing")
+
+p4
+lamhyp %>% ggplot(aes(y = BO2_tempmax_bdmin, x = as.factor(Grazing))) +
+  geom_boxplot()
+lamhyp %>% ggplot(aes(y = BO2_tempmin_bdmin, x = as.factor(Grazing))) +
+  geom_boxplot()
+
+p2+p4+p3+p1 + plot_layout(guides = "collect")
+
+lamhyp.full.poisson.gbm$cv.statistics$correlation.mean^2
+lamhyp.full.gaus.gbm$cv.statistics$correlation.mean^2 # seems best
+
+# Should nutrients be included as well?
+
+# Grazing not important - perhaps other gradients (i.e. Y or temp) is better at 
+# describing the variation in grazing pressure than the latitudinal placement of the front?
+
+lamhyp %>% ggplot(aes(y = BO2_tempmean_bdmin, x = as.factor(Tetthet))) +
+  geom_boxplot()
+lamhyp %>% ggplot(aes(y = Y, x = as.factor(Tetthet))) +
+  geom_boxplot()

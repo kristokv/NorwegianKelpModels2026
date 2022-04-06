@@ -48,8 +48,8 @@ lamhyp <- lamhyp_0 %>%
 
 # Unique coordinates, used to extract values for additinal historic layers
 
-pos.lam <- lamhyp %>% dplyr::select(Y, X, Year_HGU, BO2_tempmax_bdmean) %>% distinct(.)
-pos.sac <- saclat %>% dplyr::select(Y, X, Year_HGU,BO2_tempmax_bdmean) %>% distinct(.)
+pos.lam <- lamhyp %>% dplyr::select(Y, X, Year_HGU, BO2_tempmean_bdmin) %>% distinct(.)
+pos.sac <- saclat %>% dplyr::select(Y, X, Year_HGU,BO2_tempmean_bdmin) %>% distinct(.)
 
 obs.points <- full_join(pos.lam, pos.sac) %>% distinct(.)
 write.csv(obs.points, file = "./Data/obs.points.csv")

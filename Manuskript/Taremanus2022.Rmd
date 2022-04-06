@@ -1,0 +1,56 @@
+---
+title: "New Norwegian tangle kelp model"
+author: "Guri Sogn Andersen & Kristina Kvile"
+date: "6 4 2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Outline
+
+## Introduction - KVI
+
+* Ecosystem services
+* Historic changes in distribution - urchin grazing
+* Environmental requirements in short, different life stages in short  
+* Climate change and expectations 
+
+## Methods - KVI
+
+* Observation data: Description of data, maps of observation points (show time-line)
+* Environmental data: Table with variable, source and summary stats (range, mean, etc ...)
+* Urchin front estimates
+* Modeling: BRT fitting, predictions and validation
+
+### TODO - GSA
+[ ] Fine-tune temperature?
+[ ] Optimise parameter selection
+[ ] Simplify full model
+[ ] Validate
+
+[ ] Future predictions - RCP85
+
+Model validation summary - Results in appendix
+
+## Results - GSA
+
+* Models: Tangle kelp density, Tangle kelp biomass, Area
+* Predictions: RCP85-2100 (mainly temp and sal)
+* Prelim results: 
+ - Increased kelp distribution in the north (or higher densities)
+ - Stable in the south?
+
+Maps with: present and future predictions + difference - DENSITIES 
+Table: present and future predictions + difference - BIOMASS + AREA (by ocean basin)
+Figures: 1) Response-plots 2) Focus on grazing-temperature association 
+
+## Discussion
+
+* Brief summary and implications (biodiversity, ecosystem services)
+* Discussions of mechanisms (urchin grazing)
+* Compared to previous models - benefits of approach, data, future predictions
+* Potential usage - spatial management/planning (MPAs, restoration ...), harvesting, eco-accounting?
+
