@@ -1,0 +1,387 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={New Norwegian tangle and sugar kelp models},
+  pdfauthor={Guri Sogn Andersen \& Kristina Kvile},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{New Norwegian tangle and sugar kelp models}
+\author{Guri Sogn Andersen \& Kristina Kvile}
+\date{4 8 2022}
+
+\begin{document}
+\maketitle
+
+\hypertarget{journal}{%
+\section{Journal}\label{journal}}
+
+Hva med Ecography? Diskuterte også med HGU å dele opp i to artikler. 1)
+Artikkel der vi publiserer modellen fra blått karbon-prosjektet, og 2)
+artikkel der vi har forenklet modell og viser fortid- og
+framtidsprediksjoner. Det er nr 1 vi har skrevet outline til her:
+
+\hypertarget{outline}{%
+\section{Outline}\label{outline}}
+
+Try to keep it short and simple. Avoid all the standard stuff about kelp
+and the importance of kelp forests. Should go without explicit saying
+when describing the Blue Carbon project aims etc. (The people seeking
+this information probably knows all that stuff anyways \ldots)
+
+\hypertarget{introduction}{%
+\subsection{Introduction}\label{introduction}}
+
+\begin{itemize}
+\tightlist
+\item
+  Nordic Blue Carbon Project - background, aim, prospects?
+\item
+  Knowledge sought by Norwegian and Nordic authorities
+\item
+  The SDM models - uses and output
+\item
+  The kelp models
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Unique in spatial coverage and resolution
+  \item
+    Potential uses
+  \end{itemize}
+\end{itemize}
+
+\hypertarget{mat-met---translate-from-report-and-use-some-text-from-nordic-paper}{%
+\subsection{Mat \& Met - translate from report and use some text from
+Nordic
+paper}\label{mat-met---translate-from-report-and-use-some-text-from-nordic-paper}}
+
+\begin{itemize}
+\tightlist
+\item
+  Observation data: Description of data, maps of observation points
+\item
+  Environmental data: Table with variable, source and summary stats
+  (range, mean, etc \ldots)
+\item
+  Brief discussion of attempt of including urchin grazing pressure
+\item
+  Modeling: BRT fitting
+\end{itemize}
+
+\hypertarget{results-disc}{%
+\subsection{Results + Disc}\label{results-disc}}
+
+\begin{itemize}
+\tightlist
+\item
+  Validation
+\item
+  Some key numbers and discussions of their validity. See Gundersen et
+  al 2022 to avoid conflicts and/or duplicate publ
+\item
+  Strengths and weaknesses
+\item
+  Future prospects - ``teaser''
+\end{itemize}
+
+\hypertarget{authors}{%
+\section{AUTHORS:}\label{authors}}
+
+\textbf{Guri Sogn Andersen}, Kristina Kvile, \ldots., Helene Frigstad,
+Hege Gundersen
+
+\hypertarget{introduction-1}{%
+\section{INTRODUCTION}\label{introduction-1}}
+
+Kelp forests play an important role in the Norwegian carbon cycle, and
+has been shown likely to sequester a significant amount of carbon each
+year (Gundersen et al., 2011). Publications with global perspectives on
+the important role of kelp in the marine carbon cycle \ldots.
+(Krause-Jensen \& Duarte, 2016), recently sparked interest among Nordic
+environmental authorities. This served as a backdrop for an initiative
+from the Nordic Council of Ministers, seeking to update and increase the
+knowledge base for the Nordic marine carbon cycle in order to include
+blue forests in the national carbon inventories. This initiative birthed
+The Nordic Blue Carbon Project, which aimed to create an updated,
+quantitative overview of the carbon cycles of kelp, eelgrass and
+rockweed in the Nordic region and address the knowledge gaps in
+long-term carbon storage of macrovegetation in Nordic waters. A
+fundamental part of this project was therefore to establish species
+distribution models (SDMs) of the most important forest systems.
+\emph{Kelp forests is by far the most abundant \ldots{} blabla ? }, and
+the main results were SDMs of two kelp forest systems on both the Nordic
+and Norwegian level. The Nordic model was recently published (Kvile et
+al., 2022), and shows the spatial distribution of kelp forests
+(presence/absence) in the Nordic region. The Norwegian data set mainly
+stems from the national mapping of tangle kelp in the Norwegian Program
+for Mapping Biodiversity (Bekkby et al., 2013), and includes information
+on kelp density in an uniform way, which facilitated a much more
+detailed modelling approach. To analyze and predict the distribution of
+kelp based on a large number of potentially interacting environmental
+variables, we used boosted regression trees (BRT), a method that
+combines the advantages of machine learning and statistical regression
+techniques (Elith et al., 2008). The here presented models show the
+spatial variation in plant density within the two most important forest
+forming kelp species, namely \emph{Saccharina latissima} (sugar kelp)
+and \emph{Laminaria hyperborea} (tangle kelp), along the Norwegian
+mainland. The prediction maps covers the entire coastline of Norway at a
+25 m spatial resolution. These maps are therefore uniquely detailed, to
+a level that is to our knowledge unprecedented in marine mapping.
+
+\textbf{Skal vi ha med konvertering til biomasse?}
+
+\hypertarget{materials-and-methods}{%
+\section{MATERIALS AND METHODS}\label{materials-and-methods}}
+
+\hypertarget{datasets}{%
+\subsection{Datasets}\label{datasets}}
+
+\hypertarget{kelp-registrations}{%
+\subsubsection{Kelp registrations}\label{kelp-registrations}}
+
+The data were sampled through the Norwegian Program for Mapping
+Biodiversity (Bekkby et al., 2013). The program was designed for tangle
+kelp (n = 11 891 observations) primarily, but sugar kelp was also
+registered when found (n = 11 053). The dataset is thus well suited for
+modelling tangle kelp, but less so in the case of sugar kelp. Data was
+registered using an underwater video camera with an approximate
+observation window of 5 square meters??? (\textbf{Se
+kartleggingsprogram}). Density categories are quantified as absence,
+single plants, scarce, moderately dense, and dense forest, representing
+density categories of 0, 0.1, 0.5, 5 and 10 individual kelp plants per
+m2 for tangle kelp and 0, 0.5, 1, 7 and 15 for sugar kelp (ref Bekkby?).
+
+\emph{Print maps, remember contributions in caption (Leaflet option
+turned off)}
+
+\hypertarget{environmental-data-gis-models}{%
+\subsubsection{Environmental data / GIS
+models}\label{environmental-data-gis-models}}
+
+In fitting the models for Norway, we used field-measured depth and a
+range of environmental variables extracted from both national and global
+spatial datasets.
+
+Wave exposure was extracted from a model with a 25 m spatial resolution
+(Isæus, 2004) based on fetch, wind speed and wind frequency. Ocean
+current speed (m/s) was modeled at a horizontal resolution of 800 m
+(NorKyst-800; Albretsen et al., 2011) using the three-dimensional
+numerical ocean model ROMS (Shchepetkin \& McWilliams, 2005; Haidvogel
+et al., 2008) and downscaled to 25 m resolution. The 90th percentiles
+for seabed currents were used in our analyses. Due to the lack of a full
+cover, high resolution substrate model, which does not exist for Norway,
+slope (°) and terrain curvature (m) were derived from a bathymetry model
+with a 25 m horizontal resolution, provided by the Norwegian
+Hydrographic Service. Terrain curvature was estimated with a 250, 500
+and 1 000 m spatial calculation window (Bekkby et al., 2009). Slope and
+curvature were included as proxies for substrate under the assumption
+that gentle slopes and depressions are areas of higher likelihood of
+sedimentation and thus not hard substrate. Light at the seabed
+(photosynthetically active radiation, PAR) has been modeled using data
+from ocean color satellite sensor estimates (Saulquin et al., 2013,
+Populus et al., 2017) at a resolution of 100 m, and was downscaled to a
+model with 25 m resolution. All predictor variables given above,
+including the 25 m bathymetry model, were available as full cover GIS
+layers and used for making predictive distribution maps for kelp. We
+also included variables from the global Bio-ORACLE datasets on
+nutrients, dissolved oxygen, temperature and salinity at mean, maximum
+and minimum depths (within grid cells of 5 arc xxx minutes resolution,
+which corresponds to slightly less than 10 km at the equator). Historic
+monthly data on seabed temperature and salinity at a grid resolution of
+0.25° (\textbf{check}) was gathered from the Copernicus Marine Service,
+and annual mean and max temperatures at each observation point was
+calculated and used in fitting the model (\textbf{Check script or ask
+Kristina}), while full-coverage Bio-ORACLE layers were used in the map
+predictions of the present state of the density distributions.
+\textbf{Something about how we coupled historic data in the fitting
+process (from copernicus). Buffers etc \ldots{} We need perhaps to
+justify the choice of min/mean or max depth in the BO-layers. For the
+meantemp, the mindepth was used, while for the maxtemp the mean depth
+was used. This was mainly based on the first version of the model, but
+needs perhaps to be explained in some other way to simplify?} Even
+though the resolution is relatively low, we chose to use Bio-ORACLE for
+temperature and salinity data in the hope of utilizing their future
+climate projection layers for these variables (corresponding to
+predictions for the different RCP scenarios). It will eventually be
+possible to plug these predictions into the model to make scenarios for
+future kelp distribution, plant densities and biomass along the
+Norwegian coast. \textbf{Compare resolution of Copernicusdata with
+Bio-ORACLE. If we must justify the use of Bio-ORACLE in predictions,
+maybe better to say something about coverage (which is far better with
+BO).}
+
+We coupled kelp observations (\emph{Figure X}) to environmental data by
+extracting values from environmental raster layers cells in which the
+kelp observations were located. If a kelp observation was outside the
+cover of a raster layer, or data was missing in that specific cell, the
+environmental variable was set to missing (NA).
+
+\hypertarget{model-framework}{%
+\subsection{Model framework}\label{model-framework}}
+
+To predict the spatial distribution of kelp, boosted regression tree
+(BRT) models were built using the gbm (Greenwell et al., 2020) and dismo
+(Hijmans et al., 2020) libraries in R (R Core Team, 2020). When using
+this approach, many simple models (``trees'') are built and combined
+(``boosted'') for prediction (Elith et al., 2008). The BRT models have
+several advantages, for example, a large number of predictor variables
+of different types can be implemented without prior data transformation;
+potential complex interactions between variables are automatically
+handled; models are insensitive to outliers; and missing values are
+accommodated (Elith et al., 2008). Moreover, BRTs can handle sharp
+discontinuities, which is critical in cases such as ours, where the
+species' distribution is small relative to the covered area.
+
+Boosted Regression Tree models were built for Laminaria and Saccharina
+separately, with kelp plant density as response variable. The response
+was transformed (log + 1), wich supported the assumption of a gussian
+error distribution. We kept most model parameters to their defaults
+(Hijmans et al., 2020) but used an optimization routine based on
+cross-validated deviance to determine the optimal combination of three
+important parameters: learning rate (testing 0.0001, 0.001 and 0.01),
+tree complexity (testing 2, 4 and 6), and bag fraction (testing 0.5, 0.6
+and 0.7) (Smith, 2021). Learning rate sets the weight given to each
+tree, and smaller learning rate is preferable but computationally costly
+as a higher number of trees is required. Tree complexity defines the
+complexity of interactions that can be fitted, if required by the data.
+Bag fraction is the fraction of the data used in selecting variables at
+each iteration (each tree), which makes the model stochastic and has
+been shown to improve predictive power (Elith et al., 2008). The optimal
+parameter combinations were learning rate 0.01, tree complexity 6 and
+bag fraction 0.6 (7700 trees) for Laminaria, and learning rate X, tree
+complexity X and bag fraction X (X trees) for Saccharina. After
+identifying the optimal model with all explanatory variables included,
+we ran a simplification procedure to remove variables that contributed
+little to model predictive power using k-fold cross validation (Elith et
+al., 2008).
+
+\hypertarget{final-model}{%
+\subsection{Final model}\label{final-model}}
+
+Based on the final BRT models with unimportant predictor variables
+removed, we predicted the density of kelp along the Norwegian coast
+using the `predict' function in the raster package in R (Hijmans, 2022).
+\textbf{Noe om konvertering til biomasse??}
+
+We created a uniform raster object of all environmental predictor
+variables included in the models, resampling all GIS-layers to a 25 m
+resolution covering the whole model area (the Norwegian coast). While
+measured depth from the kelp registration was used in the model fitting,
+we used the full cover bathymetric data (m) for the predictions. And
+while historic temperature data was used in the fitting process, a
+static representation of present day annual mean and maximum temperature
+based on long term averages (Bio-Oracle) was used for the spatial
+predictions (\textbf{sjekk spesifisering av variabel}). Predictions from
+BRT models are given for all cells regardless of the presence of missing
+values for some variables, and missing values are set to the overall
+mean value for that variable.
+
+\hypertarget{results-and-discussion}{%
+\section{Results and discussion}\label{results-and-discussion}}
+
+We here present uniquely detailed models of the distribution of the two
+most important forest forming kelp species in Norway, namely sugar kelp
+(\emph{Saccharina latissima}) and tangle kelp (\emph{Laminaria
+hyperborea}). The underlying kelp data predominantly stem from surveys
+conducted to document the distribution of tangle kelp, and data from
+typical sugar kelp areas are therefore underrepresented. This may have
+lead to observations of sugar kelp being biased towards low density
+registrations, which may contribute to an underestimation of sugar kelp
+densities, but not necessarily of the total distribution area.
+
+The tangle kelp model performed reasonably well, with a total deviance
+explained as close to 75\% (a measure of variation in the data explained
+by the model) and correlation values between data and model predictions
+at 0.87 (based on training data) and 0.79 (based on cross-validation,
+CV). The sugar kelp model performed less well. Although the total
+deviance explained was approximately the same, the correlation values
+were much lower (X and X for training data and CV, respectively)
+\textbf{Maybe move these numbers to a table}
+
+The most important explanatory variables for tangle kelp were bottom
+depth and wave exposure contributing with 26.4 \% and 22 \% of the
+explained deviance respectively (\textbf{check this}), followed by
+nitrogen (11.8 \%), curvature (9.8 \%), dissolved oxygen (7.4 \%),
+phosphate (5.2 \%), mean temperature (4.9 \%), max temperature (4.6 \%),
+currents (4.3 \%) and finally max salinity (3.5 \%). All other variables
+were cut in the simplification process. \emph{Add marginal effect plots
+here} \emph{Perhaps also interaction plots?}
+
+From report: When including all areas with densities ≥1 plant per m2, we
+estimated the total area covered by tangle kelp to be 18 155 km2, and 44
+300 km2 for sugar kelp. However, when including only high-density areas,
+by setting cut-off values for forest at ≥5 for tangle kelp and ≥7 for
+sugar kelp, these numbers were reduced to 3 810 km2 and 3 607 km2. These
+numbers are slightly lower for tangle kelp and higher for sugar kelp
+compared to former estimates by Gundersen et al.~(2011), who estimated 5
+900 km2 and 2 000 km2 for tangle kelp and sugar kelp, respectively,
+using a rule-based GIS model. It should also be taken into consideration
+that, since Gundersen et al.~(2011) made these estimates, there has been
+a significant regrowth of kelp (mostly sugar kelp) following sea urchin
+destruction. The new kelp distribution models provided very detailed
+maps of densities, which varied greatly depending on environmental
+factors (Figure 2 and Figure 3). Insight into this spatial variation
+showed that there are vast areas with low densities of kelp forest along
+the Norwegian coast, compared to the high-density forests (Figure 4).
+The primary production is calculated and presented in Chapter 3.
+
+\end{document}

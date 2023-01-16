@@ -48,5 +48,7 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-# GIS folder
+# GIS folders - large files
 GIS-layers
+tempdir
+Predictions

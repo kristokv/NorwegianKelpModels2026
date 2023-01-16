@@ -57,9 +57,28 @@ write.csv(obs.points, file = "./Data/obs.points.csv")
 # Additional variables in 2022 --------------------------------------------
 
 Urchindata <- read.csv("./Data/Urchindata.csv", stringsAsFactors = FALSE)
+Tempdata <- read.csv("./Data/Tempdata.csv", stringsAsFactors = FALSE)
+NutrOxLightData <- read.csv("./Data/NutrOxLightData.csv", stringsAsFactors = FALSE)
+Salmean_df <- read.csv("./Data/Salmean_df.csv", stringsAsFactors = FALSE)
 
-saclat2022 <- saclat %>% left_join(Urchindata)
-lamhyp2022 <- lamhyp %>% left_join(Urchindata)
+names(Urchindata)
+names(Tempdata)
+names(NutrOxLightData)
+
+saclat2022 <- saclat %>% 
+  left_join(Urchindata) %>% 
+  left_join(Tempdata) %>% 
+  left_join(NutrOxLightData) %>% 
+  left_join(Salmean_df)
+head(saclat2022)
+  
+lamhyp2022 <- lamhyp %>% 
+  left_join(Urchindata) %>% 
+  left_join(Tempdata) %>% 
+  left_join(NutrOxLightData) %>% 
+  left_join(Salmean_df)
+head(lamhyp2022)
 
 write.csv(saclat2022, file = "./Data/saclat2022.csv", row.names = FALSE)
 write.csv(lamhyp2022, file = "./Data/lamhyp2022.csv", row.names = FALSE)
+

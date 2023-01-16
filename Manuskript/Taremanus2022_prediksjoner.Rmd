@@ -1,0 +1,61 @@
+---
+title: "Past, present and future of Norwegian tangle kelp"
+author: "Guri Sogn Andersen & Kristina Kvile"
+date: "6 4 2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Journal
+Hva med Ecography? 
+Diskuterte også med HGU å dele opp i to artikler. 1) Artikkel der vi publiserer modellen fra blått karbon-prosjektet, og 2) artikkel der vi har forenklet modell og viser fortid- og framtidsprediksjoner. Det er nr 2 vi har skrevet outline til her:
+
+# Outline
+
+## Introduction - KVI
+
+* Ecosystem services
+* Historic changes in distribution - urchin grazing
+* Environmental requirements in short, different life stages in short  
+* Climate change and expectations 
+
+## Methods - KVI
+
+* Observation data: Description of data, maps of observation points (show time-line)
+* Environmental data: Table with variable, source and summary stats (range, mean, etc ...)
+* Urchin front estimates
+* Modeling: BRT fitting, predictions and validation
+
+### TODO - GSA
+[x] Fine-tune temperature? - Have extracted values with buffer radius of 10 and 15 km where NA in historic layers. Not sure it helps much, seems like the BO2 layer is still most important (perhaps because of greater coverage?)
+[x] Optimize parameter selection - Include PAR and Nutrients? I think it's best to stick to BO2-layers since these probably are the most consistent with regards to what they actually show (unit, way they are calculated, etc.)
+[ ] Simplify full model
+[ ] Perhaps also compare with model including only the most important variables (subjective cut-off) (to further simplify future preds, will also speed up map predictions considerably!)
+[ ] Validate
+
+[ ] Future predictions - RCP85
+
+Model validation summary - Results in appendix
+
+## Results - GSA
+
+* Models: Tangle kelp density, Tangle kelp biomass, Area
+* Predictions: RCP85-2100 (mainly temp and sal)
+* Prelim results: 
+ - Increased kelp distribution in the north (or higher densities)
+ - Stable in the south?
+
+Maps with: present and future predictions + difference - DENSITIES 
+Table: present and future predictions + difference - BIOMASS + AREA (by ocean basin)
+Figures: 1) Response-plots 2) Focus on grazing-temperature association 
+
+## Discussion
+
+* Brief summary and implications (biodiversity, ecosystem services)
+* Discussions of mechanisms (urchin grazing)
+* Compared to previous models - benefits of approach, data, future predictions
+* Potential usage - spatial management/planning (MPAs, restoration ...), harvesting, eco-accounting?
+
