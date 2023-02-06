@@ -187,11 +187,11 @@ plot(predr.LHbiomass_reclass)
 # Se om vi får tid til å regne på epifyttvekter i tillegg
 
 # LAMHY
-predLAMHYdens <- raster("./Predictions/predLAMHYdens2022_full.grd")
+predLAMHYdens <- raster("./Predictions/predLAMHYdens2022_crop40.grd")
 plot(predLAMHYdens, predr.LHbiomass_reclass)
 plot(predLAMHYdens, predr.LHbiomass_reclass, xlim = c(0,2), ylim = c(0,500))
 
-# biomassLAMHYm2 <- writeRaster(predLAMHYdens*predr.LHbiomass_reclass, 
+# biomassLAMHYm2 <- writeRaster(predLAMHYdens*predr.LHbiomass_reclass,
 #                               file = "./Predictions/biomassLAMHY_g_m2", overwrite = TRUE, progress = "text")
 plot(biomassLAMHYm2)
 biomassLAMHYm2
@@ -221,7 +221,7 @@ plot(forestdensLAMHYcat)
 
 # Zonal
 zonalLAMHYdens_kg <- zonal(tot_kg_LAMHY, forestdensLAMHYcat, fun = 'sum', na.rm = TRUE, progress = "text")
-zonalLAMHYdens_kg %>% rename(Category = "zone", Biomass_kg = "sum") %>% 
+zonalLAMHYdens_kg %>% data.frame %>% dplyr::rename(Category = "zone", Biomass_kg = "sum") %>% 
   write.csv(file = "./Tables/zonalLAMHYdens_kg.csv", row.names = FALSE)
 
 # Regne på karbontall?

@@ -128,9 +128,57 @@ predr
 
 # Klippet og limte, og fikk til slutt noe fornuftig :-)
 
-predfinal <- raster("./Predictions/predLAMHYdens2022_full.grd")
-plot(predfinal)
+predfinal1 <- raster("./Predictions/predLAMHYdens2022_full.grd")
+plot(predfinal1)
 # See PaperFigures for images intended for publication
+
+# Perhaps we should mask this layer at depth -40? (same as with sugar kelp model)
+plot(predfinal1, predstack_2022$Depth_mod)
+
+# -1 where depths are -40 to 0
+# masklayer2 <- reclassify(dem, c(-Inf, -40, NA,  -40, 0, -1,  0, Inf, NA))
+# writeRaster(masklayer2, file = "./GIS-layers/masklayer2_depth_0_40")
+masklayer2 <- raster("./GIS-layers/masklayer2_depth_0_40")
+plot(masklayer2)
+
+# cropped prediction layer - did take a daunting amount of time doing the sugar kelp layer,
+# so opting for blocking this time around :)
+
+tr <- blockSize(stack(predfinal1, masklayer2))
+nr.round <- c(1:tr$n)
+
+predr <- raster(predstack_2022, layer=0) # raster with no values
+predr
+
+# Start writing
+predr <- writeStart(predr, 
+                    filename = "./Predictions/predLAMHYdens2022_crop40.grd",
+                    format = "raster", overwrite = TRUE)
+# Writing stuff
+for (i in 1:tr$n){
+  # getting chunk of predictionlayer
+  stack_i <- getValuesBlock(stack(predfinal1, masklayer2), row = tr$row[i], nrows = tr$nrows[i]) %>% data.frame
+  
+  # crop by calc
+  pred_i <- stack_i$layer * - stack_i$dem_resgis # layer names from origin
+
+  # writing to new map
+  predr <- writeValues(predr, v = pred_i, tr$row[i])
+  # keeping track of where we are
+  print(paste(nr.round[i], "of", length(nr.round), sep = " "))
+}
+# stop writing
+predr <- writeStop(predr)
+
+plot(predr)
+predr
+
+predfinal <- raster("./Predictions/predLAMHYdens2022_crop40")
+predfinal
+
+plot(predfinal)
+plot(predfinal, predstack_2022$Depth_mod, maxpixels=1000000,
+     ylim = c(-60, 0))
 
 # Compared to previous model
 
@@ -149,3 +197,5 @@ writeRaster(dif, "./Predictions/LAMHY_2022_2020_dif.grd")
 # Tok 30 timer på den gamle modellen.
 # Kanskje verdt å bruke QGIS eller GRASS?
 # Går ganske fort i QGIS!
+
+

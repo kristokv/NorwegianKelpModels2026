@@ -117,7 +117,7 @@ map2 <- leaflet(sacgeo,
                 options = leafletOptions(
                   attributionControl=FALSE,
                   zoomControl = FALSE)) %>% # removed zoom control for better export to small image 
-  addProviderTiles(providers$) %>% #CartoDB #Esri.WorldGrayCanvas
+  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB #Esri.WorldGrayCanvas
   addCircles(color = ~Farge, opacity = 0.8, fillColor = ~Farge, fillOpacity = 0.8) %>% 
   addScaleBar("topleft") %>% 
   addLegend("bottomright", pal = gradpal_sac, values = ~ Tetthet,
@@ -321,10 +321,10 @@ gbm.perspec(saclat.simp.manual.gbm, 4, 3,
 
 # Map predictions ---------------------------------------------------------
 
-# Lamhyp:
+# Lamhyp downsample:
 predfinal <- raster("./Predictions/predLAMHYdens2022_full.grd")
-
 plot(predstack_2022, predfinal)
+
 hist(predfinal[predfinal > 0])
 
 # lamhyp_downsample <- raster::aggregate(predfinal,
@@ -332,6 +332,22 @@ hist(predfinal[predfinal > 0])
 #                                fun = mean,
 #                                na.rm = TRUE)
 # writeRaster(lamhyp_downsample, "./Predictions/predLAMHYdens2022_downsample500")
+
+
+# Saclat downsample:
+predfinal_sac <- raster("./Predictions/predSACLATdens2022_crop40")
+plot(predstack_2022, predfinal_sac)
+
+# Model now truncated at 40 m depth
+
+# saclat_downsample <- raster::aggregate(predfinal_sac,
+#                                fact = 20,
+#                                fun = mean,
+#                                na.rm = TRUE,
+#                                filename = "./Predictions/predSACLATdens2022_downsample500",
+#                                overwrite = TRUE)
+
+## PLOT Lamhyp
 
 lamhyp_downsample <- raster("./Predictions/predLAMHYdens2022_downsample500")
 
@@ -366,6 +382,43 @@ mapshot(predmap1, file = paste(maindir, "Figures/LamhypBRTMap.png", sep = "/"),
         remove_controls = c("zoomControl", "layersControl"),
         vwidth = 700, vheight = 744)
 
+## PLOT Saclat
+
+saclat_downsample <- raster("./Predictions/predSACLATdens2022_downsample500")
+saclat_downsample
+
+plot(saclat_downsample)
+saclat_plot <- saclat_downsample %>% projectRaster(., crs = "+proj=longlat +datum=WGS84")
+saclat_plot[saclat_plot < 1] <- NA
+extent(saclat_plot)
+
+tmap_mode(mode = "view")
+tm_shape(saclat_plot) +
+  tm_raster(style = "cont", palette = "Reds") +
+  tm_layout(title = "BRT model sugar kelp",
+            legend.outside = TRUE)
+
+# Color gradients
+gradpal2_sac <- colorNumeric("Spectral", values(saclat_plot), na.color = "transparent", reverse = TRUE)
+
+predmap2 <- leaflet(saclat_plot,
+                    options = leafletOptions(
+                      attributionControl=FALSE,
+                      zoomControl = FALSE)) %>% # removed zoom control for better export to small image
+  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB.DarkMatter #Esri.WorldGrayCanvas
+  addRasterImage(saclat_plot, colors = gradpal2_sac) %>% 
+  addScaleBar("topleft")  %>%
+  addLegend("bottomright", pal = gradpal2_sac, values = values(saclat_plot),
+            title = "Predicted density </br> of sugar kelp </br> (plants m<sup>-2</sup>)") %>% 
+  setView(lng = 16, lat = 65.5, zoom = 5)
+
+predmap2
+
+mapshot(predmap2, file = paste(maindir, "Figures/SaclatBRTMap.png", sep = "/"), 
+        remove_controls = c("zoomControl", "layersControl"),
+        vwidth = 700, vheight = 744)
+
+
 
 # Area summaries ----------------------------------------------------------
 
@@ -378,7 +431,7 @@ zonalLAMHYdens_kg <- read.csv("./Tables/zonalLAMHYdens_kg.csv") %>%
   mutate(Biomass_milltonn = Biomass_kg/1000000000)
 str(zonalLAMHYdens_kg)
 
-lamhyp_rastertable %>% data.frame %>%
+lamhyp_rastertable %>% data.frame %>% 
   filter(value > 0) %>% 
   mutate(area_m = count*25*25,
          area_km = area_m/1e+06,
@@ -389,7 +442,30 @@ lamhyp_rastertable %>% data.frame %>%
   mutate(densities = ifelse(forest == 1, "> 4", "1 - 4")) %>%
   dplyr::select(-forest) %>% data.frame() %>% 
   left_join(zonalLAMHYdens_kg) %>% 
-  dplyr::select(-c(Area_m, X:Category, Biomass_kg)) %>% 
+  dplyr::select(-c(Area_m, Category, Biomass_kg)) %>% 
   print %>% 
   write.csv(., file = "./Tables/lamhyp_rastertable.csv", row.names = FALSE)
+
+
+saclat_rastertable <- freq(predfinal_sac, progress = "text")
+saclat_rastertable
+
+saclat_rastertable %>% data.frame() %>% 
+  filter(value > 0) %>% 
+  filter(!is.na(value)) %>% 
+  mutate(area_m = count*25*25,
+         area_km = area_m/1e+06,
+         forest = ifelse(value > 6, 1L, 0L)) %>%
+  group_by(forest) %>% 
+  summarise(N = sum(count), Area_m = sum(area_m), Area_km = sum(area_km)) %>% 
+  add_column(densities = 0L, .after = "forest") %>%
+  mutate(densities = ifelse(forest == 1, "> 6", "1 - 6")) %>%
+  dplyr::select(-forest) %>%  
+  print %>% 
+  write.csv(., file = "./Tables/saclat_rastertable.csv", row.names = FALSE)
+
+# Sjekk Frigstad et al ...
+# Extreme differences in the predictions of S. latissima forest areas
+# I do trust this model more than the previous (range of values etc. seems much more realistic)
+
 

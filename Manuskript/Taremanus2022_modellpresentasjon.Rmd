@@ -73,7 +73,7 @@ The data were sampled through the Norwegian Program for Mapping Biodiversity (Be
 
 In fitting the models for Norway, we used field-measured depth and a range of environmental variables extracted from both national and global spatial datasets. 
  
-Wave exposure was extracted from a model with a 25 m spatial resolution (Isæus, 2004) based on fetch, wind speed and wind frequency. Ocean current speed (m/s) was modeled at a horizontal resolution of 800 m (NorKyst-800; Albretsen et al., 2011) using the three-dimensional numerical ocean model ROMS (Shchepetkin & McWilliams, 2005; Haidvogel et al., 2008) and downscaled to 25 m resolution. The 90th percentiles for seabed currents were used in our analyses. Due to the lack of a full cover, high resolution substrate model, which does not exist for Norway, slope (°) and terrain curvature (m) were derived from a bathymetry model with a 25 m horizontal resolution, provided by the Norwegian Hydrographic Service. Terrain curvature was estimated with a 250, 500 and 1 000 m spatial calculation window (Bekkby et al., 2009). Slope and curvature were included as proxies for substrate under the assumption that gentle slopes and depressions are areas of higher likelihood of sedimentation and thus not hard substrate. Light at the seabed (photosynthetically active radiation, PAR) has been modeled using data from ocean color satellite sensor estimates (Saulquin et al., 2013, Populus et al., 2017) at a resolution of 100 m, and was downscaled to a model with 25 m resolution. All predictor variables given above, including the 25 m bathymetry model, were available as full cover GIS layers and used for making predictive distribution maps for kelp. We also included variables from the global Bio-ORACLE datasets on nutrients, dissolved oxygen, temperature and salinity at mean, maximum and minimum depths (within grid cells of 5 arc xxx minutes resolution, which corresponds to slightly less than 10 km at the equator). Historic monthly data on seabed temperature and salinity at a grid resolution of 0.25° (**check**) was gathered from the Copernicus Marine Service, and annual mean and max temperatures at each observation point was calculated and used in fitting the model (**Check script or ask Kristina**), while full-coverage Bio-ORACLE layers were used in the map predictions of the present state of the density distributions. **Something about how we coupled historic data in the fitting process (from copernicus). Buffers etc ... We need perhaps to justify the choice of min/mean or max depth in the BO-layers. For the meantemp, the mindepth was used, while for the maxtemp the mean depth was used. This was mainly based on the first version of the model, but needs perhaps to be explained in some other way to simplify?** Even though the resolution is relatively low, we chose to use Bio-ORACLE for temperature and salinity data in the hope of utilizing their future climate projection layers for these variables (corresponding to predictions for the different RCP scenarios). It will eventually be possible to plug these predictions into the model to make scenarios for future kelp distribution, plant densities and biomass along the Norwegian coast. **Compare resolution of Copernicusdata with Bio-ORACLE. If we must justify the use of Bio-ORACLE in predictions, maybe better to say something about coverage (which is far better with BO).**
+Wave exposure was extracted from a model with a 25 m spatial resolution (Isæus, 2004) based on fetch, wind speed and wind frequency. Ocean current speed (m/s) was modeled at a horizontal resolution of 800 m (NorKyst-800; Albretsen et al., 2011) using the three-dimensional numerical ocean model ROMS (Shchepetkin & McWilliams, 2005; Haidvogel et al., 2008) and downscaled to 25 m resolution. The 90th percentiles for seabed currents were used in our analyses. Due to the lack of a full cover, high resolution substrate model, which does not exist for Norway, slope (°) and terrain curvature (m) were derived from a bathymetry model with a 25 m horizontal resolution, provided by the Norwegian Hydrographic Service. Terrain curvature was estimated with a 250, 500 and 1 000 m spatial calculation window (Bekkby et al., 2009). Slope and curvature were included as proxies for substrate under the assumption that gentle slopes and depressions are areas of higher likelihood of sedimentation and thus not hard substrate. Light at the seabed (photosynthetically active radiation, PAR) has been modeled using data from ocean color satellite sensor estimates (Saulquin et al., 2013, Populus et al., 2017) at a resolution of 100 m, and was downscaled to a model with 25 m resolution (**NB! Include all variables in table**). All predictor variables given above, including the 25 m bathymetry model, were available as full cover GIS layers and used for making predictive distribution maps for kelp. We also included variables from the global Bio-ORACLE datasets on nutrients, dissolved oxygen, temperature and salinity at mean, maximum and minimum depths (within grid cells of 5 arc xxx minutes resolution, which corresponds to slightly less than 10 km at the equator). Historic monthly data on seabed temperature and salinity at a grid resolution of 0.25° (**check**) was gathered from the Copernicus Marine Service, and annual mean and max temperatures at each observation point was calculated and used in fitting the model (**Check script or ask Kristina**), while full-coverage Bio-ORACLE layers were used in the map predictions of the present state of the density distributions. **Something about how we coupled historic data in the fitting process (from copernicus). Buffers etc ... We need perhaps to justify the choice of min/mean or max depth in the BO-layers. For the meantemp, the mindepth was used, while for the maxtemp the mean depth was used. This was mainly based on the first version of the model, but needs perhaps to be explained in some other way to simplify?** Even though the resolution is relatively low, we chose to use Bio-ORACLE for temperature and salinity data in the hope of utilizing their future climate projection layers for these variables (corresponding to predictions for the different RCP scenarios). It will eventually be possible to plug these predictions into the model to make scenarios for future kelp distribution, plant densities and biomass along the Norwegian coast. **Compare resolution of Copernicusdata with Bio-ORACLE. If we must justify the use of Bio-ORACLE in predictions, maybe better to say something about coverage (which is far better with BO).**
 
 We coupled kelp observations (*Figure X*) to environmental data by extracting values from environmental raster layers cells in which the kelp observations were located. If a kelp observation was outside the cover of a raster layer, or data was missing in that specific cell, the environmental variable was set to missing (NA).
 
@@ -123,28 +123,46 @@ Boosted Regression Tree models were built for Laminaria and Saccharina separatel
 
 ## Final model
 
-Based on the final BRT models with unimportant predictor variables removed, we predicted the density of kelp along the Norwegian coast using the ‘predict’ function in the raster package in R (Hijmans, 2022). **Noe om konvertering til biomasse??**
+Based on the final BRT models with unimportant predictor variables removed, we predicted the density of kelp along the Norwegian coast using the ‘predict’ function in the raster package in R (Hijmans, 2022). 
 
-We created a uniform raster object of all environmental predictor variables included in the models, resampling all GIS-layers to a 25 m resolution covering the whole model area (the Norwegian coast). While measured depth from the kelp registration was used in the model fitting, we used the full cover bathymetric data (m) for the predictions. And while historic temperature data was used in the fitting process, a static representation of present day annual mean and maximum temperature based on long term averages (Bio-Oracle) was used for the spatial predictions (**sjekk spesifisering av variabel**). Predictions from BRT models are given for all cells regardless of the presence of missing values for some variables, and missing values are set to the overall mean value for that variable. 
+We created a uniform raster object of all environmental predictor variables included in the models, resampling all GIS-layers to a 25 m resolution covering the whole model area (the Norwegian coast), cropped to areas of water depths down to 40 m. While measured depth from the kelp registration was used in the model fitting, we used the full cover bathymetric data (m) for the predictions. And while historic temperature data was used in the fitting process, a static representation of present day annual mean and maximum temperature based on long term averages (Bio-Oracle) was used for the spatial predictions (**sjekk spesifisering av variabel**). Predictions from BRT models are given for all cells regardless of the presence of missing values for some variables, and missing values are set to the overall mean value for that variable. 
 
+**Noe om konvertering til biomasse??**
+The final models shows the predicted density in number of plants per square meter, in each grid cell of 25 x 25 m. Based on a previously published model describing variation in tangle kelp wet weight along environmental gradients (Gundersen et al ...), we were able to create a spatial layer with predicted wet weight per plant within the same grid. Multiplying these layers and scaling for area covered, gives the spatial predictions of variability in tangle kelp biomass in wet weight (kg m-2). While forest areas have by far the most important role as habitat providers, the vast areas with lower densities of kelp comprise more kelp biomass in total. This particularly important to keep in mind when estimating standing stocks of kelp, for instance in considering kelp as potential marine carbon sinks (?? - what's the correct term here... ??)
 
 # Results
 ## Predicted Kelp Distribution
 * **In words**
 * **Show maps**
 
-Tangle kelp presence is predicted along almost the entire coastline of Norway, with the highest densities and largest continuous areas in Mid-Norway. Areas with plant densities above 5 individuals m^-2^ are considered kelp forests. There are, however vast areas with predicted tangle kelp presence, where densities falls below this "threshold". 
+Tangle kelp presence is predicted along almost the entire coastline of Norway (**Xref map**), with the highest densities and largest continuous areas in Mid-Norway. Areas with plant densities above 4 individuals m^-2^ are considered kelp forests, and were predicted to cover an total area of 2622 km^-2^ (**Xref table**). There are also large areas (10058 km^-2^) with predicted tangle kelp presence, where densities falls below this "threshold" (1-4 plants m^-2^). 
 <!-- May explain differences between forest areas predicted from previous models (especially the rule based models) and the here presented version -->
 <!-- Discuss briefly urchin grazing -->
 
 
 
-![Predictions of tangle kelp densities along the Norwegian coastline based on the final BRT-model.](../Figures/LamhypBRTMap.png)
+![Predictions of tangle kelp densities along the Norwegian coastline based on the final tangle kelp BRT-model.](../Figures/LamhypBRTMap.png)
+
+Sugar kelp presence is predominantly predicted along the southern coast of Norway, with the highest densities in South-West Norway. Forests were defined as areas covered by densities greater than 6 plants m^-2^, which was predicted to cover a mere 3 km^2^ in total. Lower density occurrences (1-6 plants ^m-2^) were predicted to cover a total of 6138 km^2^.
+
+![Predictions of sugar kelp densities along the Norwegian coastline based on the final sugar kelp BRT-model.](../Figures/SaclatBRTMap.png)
+<!-- Something weird with the predictions far out from the coastline. Truncated this model at 40 m depths to deal with this. A bit worried, and do not trust this model to the same extent as the L. hyperborea model -->
+
 
 ```{r national kelp numbers, echo = FALSE}
+sacctab <- read.csv("../Tables/saclat_rastertable.csv") %>% 
+  add_column(Kelp = NA, .before = "densities") %>% 
+  mutate(Kelp = "Sugar kelp") 
+
 read.csv("../Tables/lamhyp_rastertable.csv") %>% 
   add_column(Kelp = NA, .before = "densities") %>% 
   mutate(Kelp = "Tangle kelp") %>% 
+  full_join(sacctab) %>% 
+  dplyr::select(-Area_m) %>% 
+  # round numbers
+  mutate(across(where(is.numeric), round, 2)) %>% 
+  
+  # TABLE layout
   flextable %>%
     add_header_row(
     top = TRUE,                # New header goes on top of existing header row
@@ -159,7 +177,7 @@ read.csv("../Tables/lamhyp_rastertable.csv") %>%
       densities = "",
       N = "",
       Area_km = "km", 
-      Biomass_milltonn = "mill tonn")  %>%
+      Biomass_milltonn = "mill Mg")  %>% # megagram = metric ton = tonne (eller tonn på norsk) = 1000 kg
   
   compose(part = "header", i = 2, j = 4,
          value = as_paragraph("km", as_sup("2"))) %>% 
@@ -168,25 +186,29 @@ read.csv("../Tables/lamhyp_rastertable.csv") %>%
   merge_at(i = 1:2, j = 1, part = "header") %>% 
   merge_at(i = 1:2, j = 2, part = "header") %>% 
   merge_at(i = 1:2, j = 3, part = "header") %>% 
-  flextable::align(align = "center", j = c(2:5), part = "all") %>% 
+  flextable::align(align = "center", j = 2, part = "all") %>% 
+  flextable::align(align = "center", j = c(3:5), part = "header") %>% 
   # add vertical lines 
-  vline(part = "all", j = 1) %>%   # at column 2 
-  vline(part = "all", j = 3) %>%   # at column 5
+  vline(part = "all", j = 1) %>%    
+  vline(part = "all", j = 3) %>%   
+  # add horisontal lines
+  hline(part = "body", i = 2) %>% 
   # font changes
   bold(i = 1, bold = TRUE, part = "header") %>% 
   italic(i = 2, italic = TRUE, part = "header") %>%  
   fontsize(i = 1:2, size = 10, part = "header") %>% 
-  fontsize(i = 1:2, size = 8, part = "body") %>%
-  autofit()
+  fontsize(i = 1:4, size = 8, part = "body") %>%
+  autofit() %>% 
+  colformat_double(., big.mark = " ", digits = 0)
 ```
 
 
 ## Associations with Environmental Variables
-The tangle kelp model performed reasonably well, with a total deviance explained as close to 75% (a measure of variation in the data explained by the model) and correlation values between data and model predictions at 0.87 (based on training data) and 0.79 (based on cross-validation, CV). The sugar kelp model performed less well. Although the total deviance explained was approximately the same, the correlation values were lower (0.84 and 0.66 for training data and CV, respectively). The larger gap in correlation values between data and model predictions when comparing training data and CV, means that there is an increased risk of prediction errors. Hence, our confidence in model predictions is stronger with the tangle kelp than the sugar kelp model, particularly when the models are used for geographic extrapolation or future projections. 
+The tangle kelp model performed reasonably well, with a total deviance explained as close to 75% (a measure of variation in the data explained by the model) and correlation values between data and model predictions at 0.87 (based on training data) and 0.79 (based on cross-validation, CV). The sugar kelp model performed less well. Although the total deviance explained was approximately the same, the correlation values were lower (0.84 and 0.66 for training data and CV, respectively). The larger gap in correlation values between data and model predictions when comparing training data and CV, means that there is an increased risk of prediction errors. Hence, our confidence in model predictions is stronger with the tangle kelp than the sugar kelp model, particularly when the models are used for geographic extrapolation (or future projections). 
 
 Ten explanatory variables were kept in the final BRT model for tangle kelp, with the most important being depth, wave exposure, nitrate concentration and curvature of the sea bottom (**see Figure**). The results place the optimum of tangle kelp in an environmental space where depth is shallower than 30 m, exposure to wave action is considerable (**some sort of units?**), the nitrate and phosphate concentrations are relatively low (**be more specific with regards to units and season/mean/...**), the terrain is hilly, preferably convex (within a 500 m2 window). In addition, predicted densities will generally be higher in ... **how do we interpret the oxygen levels? (plot these in a map to see)**, the annual mean temperature is above 8&deg;C and the annual maximum temperature is below 15&deg;C, **don't understand the relationship with current** and the maximum salinity above 34 psu.
 
-In the final BRT model for sugar kelp eleven variables were kept, with the most important being depth, wave exposure, mean temperature, and dissolved oxygen (**see Figure**). In comparison with tangle kelp, the vertical distribution of sugar kelp seems narrower with a clear limiting driver acting in the shallow areas. The optimum is shifted more towards the sheltered parts of the environmental space, but with seemingly similar requirements with regards to annual mean temperature (above 8&deg;C) and a similar preference for hilly terrain (convex terrain with slope 40-55&deg). Along gradients of dissolved oxygen, however the density optimas varies considerably and are almost opposite (**and is not easy to interpret?? what does this mean?? effect of competition?**). A similar pattern of opposite relationships can perhaps be discerned along a gradient of maximum salinity (dip around 35 psu). A notable difference is also the suggested optimum of higher annual maximum temperatures (15-20&deg;C).  
+In the final BRT model for sugar kelp eleven variables were kept, with the most important being depth, wave exposure, mean temperature, and dissolved oxygen (**see Figure**). In comparison with tangle kelp, the vertical distribution of sugar kelp seems narrower with a clear limiting driver acting in the shallow areas. The optimum is shifted more towards the sheltered parts of the environmental space, but with seemingly similar requirements with regards to annual mean temperature (above 8&deg;C) and a similar preference for hilly terrain (convex terrain with slope 40-55&deg). Along the gradient of dissolved oxygen, however, the density optimas varies considerably and are almost opposite (**and is not easy to interpret?? what does this mean?? effect of competition?**). A similar pattern of opposite relationships can perhaps be discerned along a gradient of maximum salinity (dip around 35 psu). A notable difference is also the suggested optimum of higher annual maximum temperatures (15-20&deg;C).  
 
 *Add marginal effect plots here*
 *Perhaps also interaction plots?*
@@ -197,14 +219,20 @@ In the final BRT model for sugar kelp eleven variables were kept, with the most 
 # Discussion
 
 **Skryt her:**
-We here present uniquely detailed density distribution maps of the two most important forest forming kelp species in Norway, namely sugar kelp (*Saccharina latissima*) and tangle kelp (*Laminaria hyperborea*). 
+We here present uniquely detailed density distribution maps of the two most important forest forming kelp species in Norway, namely sugar kelp (*Saccharina latissima*) and tangle kelp (*Laminaria hyperborea*). Previous kelp distribution maps from Norway with national coverage shows the extent of kelp forest, either based on a mosaic of models (Bekkby et al - Nasjonal kartlegging av biologisk mangfold...) or based on simple rule-based GIS models. The two models presented in this work, however, predict actual plant densities of sugar kelp and tangle kalp along the entire coast of Norway based on two species specific models with national coverage. In addition to more accurate stock estimations, which is increasingly important with the demand for the inclusion of marine species in e.g. the national carbon inventories, the models may serve as tools for several management purposes, including resource management and spatial planning. 
 
-**Problemer her:**
-The underlying kelp data predominantly stem from surveys conducted to document the distribution of tangle kelp, and data from typical sugar kelp areas are therefore underrepresented. This may have lead to observations of sugar kelp being biased towards low density registrations, which may contribute to an underestimation of sugar kelp densities, but not necessarily of the total distribution area.
-
-**Sett i fht. annen litteratur etc.:**
+**Sett i fht. andre modeller og annen litteratur etc.:**
+According to the here presented model, tangle kelp forest covers (> 4 plants m-2) an area of 2622 km2, while scarcer densities (1 - 4 plants m-2) are predicted over a total area of 10058 km2. The currently estimated areal cover of tangle kelp forest is considerably lower than previously predicted by rule-based models (Gundersen et al), by which forests was predicted to cover a total of 5900 km2. This is likely to, at least in part, reflect the gap between potential and realized niche. For instance, spatial variation in variables that may also drive the strength and direction of biological interactions, such as the dynamics of the predator-urchin-kelp relationships, may to a greater extent have been captured in the complexity of the BRT-model. But it also reflects the greater detail to which the ecological space is described. The BRT-model includes more variables in the predictor, including climate relevant variables like **examples**, which the rule-based models did not. Furthermore, it describes gradual as well as abrupt changes along environmental gradients, and allows for complex interactions, where rule-based counterparts operates with strict cut-offs (*stemmer dette?*). All of this is likely to narrow down the theoretical multivariate space in which the kelp exists to more closely resemble that of reality.   
 
 **Nytteverdi etc.:**
+The coupling of the kelp density models to models describing geographic variation in properties like biomass per plant (see Gundersen et al ...), paves the way for more detailed areal planning and management with respect to both harvesting, the management of resources associated with kelp forests, and not the least with respect to the planning and management of marine protected areas (MPAs). Furthermore, low density areas may be important in the connectivity between more densely populated forest areas, and these new models gives an unique insight into their potential coverage. This insight is also important in planning and management of resource utilization and MPAs. Finally, the presented models may open several small windows into possible futures, serving as foundations for more realistic projections for blue forests following for instance the different climate scenarios. Some caveats do however apply:   
+
+**Problemer her:**
+It is virtually impossible to count the number of kelp individuals per square meter by drop camera in the field, and in most cases data were recorded as perceived percentage cover on a semi-quantitative scale. The recordings were then "translated" into probable plant densities based on ... (should this be explained more thoroughly?). However, the field personnel is thoroughly trained, and most areas have been mapped by the same people over several years, which at least minimizes the risk of systematic deviance in quantification. This does however mean that while the density maps may reflect a gradient in forest volume and habitat function quite accurately, the conversion to biomass and eventually carbon numbers, may be less accurate. But, wht *is* certain, is that the here presented tangle kelp model is far better than its predecessors for all purposes. (**Need to compare rule-based - nordic carbon - present models to show this. Less certain about the sugar kelp model**). The sugar kelp model is however, perhaps a different matter ... (but this remains to be seen - lack of representative data for testing - blabla - ...)
+
+The underlying kelp data predominantly stem from surveys conducted to document the distribution of tangle kelp, and data from typical sugar kelp areas are therefore underrepresented. This may have lead to observations of sugar kelp being biased towards low density registrations, which may contribute to an underestimation of sugar kelp densities, but not necessarily of the total distribution area.
+
+**Kutt? Kompliserer ting undøvendig?***The number of canopy plants that amount to a given percentage of cover, could thus vary greatly depending on plant, and especially on lamina size, which is likely to vary systematically both geographically and along environmental gradients (Hvordan kommer vi rundt dette?). However, even when the canopy layer is dense, an understory layer of smaller plants, stands ready to burst into growth if the canopy disappears... *
 
 **From report:**
 When including all areas with densities ≥1 plant per m2, we estimated the total area

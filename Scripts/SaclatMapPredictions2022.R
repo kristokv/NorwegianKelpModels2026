@@ -24,7 +24,7 @@ rasterOptions()
 
 # Model
 finalmodel_sac <- readRDS("./Models/saclat.simp.manual.gbm_v3.rds") #saclat.simp.manual.gbm 
-finalmodel_sac
+finalmodel_sac$distribution
 
 # Predvar
 finalmodel_sac$var.names
@@ -98,32 +98,55 @@ predr <- writeStop(predr)
 plot(predr)
 predr
 
-predfinal_sac <- raster("./Predictions/predSACLATdens2022")
-plot(predfinal_sac)
+predfinal_sac1 <- raster("./Predictions/predSACLATdens2022")
+predfinal_sac1
+plot(predfinal_sac1)
 # See PaperFigures for images intended for publication
 
+# Perhaps we should mask this layer at depth -40?
+plot(predfinal_sac1, predstack_2022$Depth_mod)
 
+# -1 where depths are -40 to 0
+# masklayer2 <- reclassify(dem, c(-Inf, -40, NA,  -40, 0, -1,  0, Inf, NA))
+# writeRaster(masklayer2, file = "./GIS-layers/masklayer2_depth_0_40")
+masklayer2 <- raster("./GIS-layers/masklayer2_depth_0_40")
+plot(masklayer2)
 
+# cropped prediction layer
+# predfinal_sac <- raster::calc(predfinal_sac1, fun = function(x){x * -masklayer2}, 
+#                               filename = "./Predictions/predSACLATdens2022_crop40",
+#                               overwrite = TRUE)
+# The laptop just repetedly started acting weird and shutting down - memory issues? Not sure...
+# Trying this instead: (took forever - about 24 hrs - would use blocking next time - or GRASS)
+# predfinal_sac <- predfinal_sac1 
+# predfinal_sac[is.na(masklayer2)] <- NA
+# predfinal_sac
+# 
+# raster::writeRaster(predfinal_sac, filename = "./Predictions/predSACLATdens2022_crop40", overwrite = TRUE)
 
+predfinal_sac <- raster("./Predictions/predSACLATdens2022_crop40")
+predfinal_sac
 
-
+plot(predfinal_sac)
+plot(predfinal_sac, predstack_2022$Depth_mod, maxpixels=1000000,
+     ylim = c(-60, 0))
 
 # Compared to previous model
 
-pred2020_sac <- raster("./Predictions/predLAMHYdens_crop.grd")
-image(pred2020)
+pred2020_sac <- raster("./Predictions/predSACLATdens_crop.grd")
+plot(pred2020_sac)
+plot(pred2020_sac, predstack_2022$Depth_mod)
 
-dif <- predfinal - pred2020
-plot(dif)
-hist(dif)
 
-plot(predfinal, pred2020, cex = 1)
+# dif_sac <- predfinal_sac1 - pred2020_sac
+# writeRaster(dif_sac, "./Predictions/SACLAT_2022_2020_dif")
+dif_sac <- raster("./Predictions/SACLAT_2022_2020_dif")
 
-writeRaster(dif, "./Predictions/LAMHY_2022_2020_dif.grd")
+plot(dif_sac)
+hist(dif_sac)
 
-# Stats per kommune ... Sist jeg gjorde zonal stats i R tok det veeeldig lang tid.
-# Tok 30 timer på den gamle modellen.
-# Kanskje verdt å bruke QGIS eller GRASS?
-# Går ganske fort i QGIS!
+plot(predfinal_sac1, pred2020_sac, cex = 1)
+plot(predfinal_sac, pred2020_sac, cex = 1)
+
 
 
