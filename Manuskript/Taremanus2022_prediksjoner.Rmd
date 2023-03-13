@@ -59,3 +59,4 @@ Figures: 1) Response-plots 2) Focus on grazing-temperature association
 * Compared to previous models - benefits of approach, data, future predictions
 * Potential usage - spatial management/planning (MPAs, restoration ...), harvesting, eco-accounting?
 
+<!-- LIGHT!!!-->

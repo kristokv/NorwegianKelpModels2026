@@ -77,13 +77,14 @@ saclat.full.poisson.gbm$contributions
 
 # Save BRT model to own object - just to be sure
 saveRDS(saclat.full.poisson.gbm, file = "./Models/saclat.full.poisson.gbm_v3.rds")
+saclat.full.poisson.gbm <- readRDS("./Models/saclat.full.poisson.gbm_v3.rds")
 
 # respons
 gbm.plot(saclat.full.poisson.gbm, write.title=TRUE, show.contrib=TRUE, plot.layout = c(3,3)) 
 gbm.plot.fits(saclat.full.poisson.gbm)
 
 # prediksjoner
-plot(saclat.full.poisson.gbm$data$y, saclat.full.poisson.gbm$fitted)
+plot(saclat.full.poisson.gbm$data$y/2, saclat.full.poisson.gbm$fitted/2)
 abline(a = 0, b = 1, col = "red")
 
 cor(saclat.full.poisson.gbm$data$y, saclat.full.poisson.gbm$fitted) # pearson correlation
@@ -253,6 +254,8 @@ saclat.simp.manual.gbm <- gbm.step(data = cbind(saclat, responsvar_sac),
                                  bag.fraction = 0.7)
 saveRDS(saclat.simp.manual.gbm, file = "./Models/saclat.simp.manual.gbm_v3.rds")
 
+saclat.simp.manual.gbm <- readRDS("./Models/saclat.simp.manual.gbm_v3.rds")
+
 saclat.simp.manual.gbm$cv.statistics$correlation.mean
 saclat.simp.manual.gbm$self.statistics$correlation # same as pearson correlation
 
@@ -327,7 +330,7 @@ saclat %>% dplyr::select(Date) %>% mutate(Date2 = as.Date(Date, format = "%Y-%m-
 saclat %>% dplyr::select(Year_HGU) %>% summary
 # 30-40 years worth of data, probably tempterature increase as well
 
-# prediksjoner med fremtidscenario RCP 85 - temp og salinitet
+# prediksjoner med fremtidscenario RCP 85 - temp og salinitet OG LYS!
 
 pred_RCP85_2100_sac <- saclat %>% left_join(responsvar_sac) %>%
   mutate(Grazing = 0) %>% 
@@ -337,6 +340,7 @@ pred_RCP85_2100_sac <- saclat %>% left_join(responsvar_sac) %>%
   mutate(Meantemp = RCP85meantemp_2100,
          Maxtemp = RCP85maxtemp_2100,
          BO2_salmax_bdmean = RCP85maxsal_2100) %>% 
+  mutate(Depth_mod = Depth_mod*2.698789) %>%  # Ref ThoughtExperimentsLight.R
   predict(finalmodel_sac, newdata = .)
 
 par(mfrow = c(1,1))

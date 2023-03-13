@@ -39,7 +39,7 @@ bottom_T_max  <- stack(paste(cop_path, "bottomT_max_1993-2018.tif", sep ="/"))
 bottom_T_mean <- stack(paste(cop_path, "bottomT_mean_1993-2018.tif", sep ="/"))
 bottom_T_min  <- stack(paste(cop_path, "bottomT_min_1993-2018.tif", sep ="/"))
 
-# Surface Salinity
+# Salinity (seafloor according to Kvile?)
 SS_max  <- stack(paste(cop_path, "so_max_1993-2018.tif", sep ="/"))
 SS_mean <- stack(paste(cop_path, "so_mean_1993-2018.tif", sep ="/"))
 SS_min  <- stack(paste(cop_path, "so_min_1993-2018.tif", sep ="/"))

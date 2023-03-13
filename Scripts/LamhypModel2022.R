@@ -411,7 +411,7 @@ lamhyp %>% dplyr::select(Date) %>% mutate(Date2 = as.Date(Date, format = "%Y-%m-
 lamhyp %>% dplyr::select(Year_HGU) %>% summary
 # 20 years worth of data, probably tempterature increase as well
 
-# prediksjoner med fremtidscenario RCP 85 - temp og salinitet
+# prediksjoner med fremtidscenario RCP 85 - temp og salinitet OG LYS!!
 
 pred_RCP85_2100 <- lamhyp %>% left_join(responsvar) %>%
   mutate(Grazing = 0) %>% 
@@ -421,11 +421,15 @@ pred_RCP85_2100 <- lamhyp %>% left_join(responsvar) %>%
   mutate(Meantemp = RCP85meantemp_2100,
          Maxtemp = RCP85maxtemp_2100,
          BO2_salmax_bdmean = RCP85maxsal_2100) %>% 
+  mutate(Depth_mod = Depth_mod*2.698789) %>%  # Ref ThoughtExperimentsLight.R
   predict(finalmodel, newdata = .)
+
+### NB !!! Ekstrem forskjell med og uten dybdejustering for å ta høyde for lys!!!
+### Antagelig ikke riktig å bruke samme konstant over hele Norge. Mulig nordområder er
+### bedre representert av K for dypere vannmasser (ref Opdal 2019)
 
 par(mfrow = c(1,1))
 plot(pred_now, pred_RCP85_2100)
-
 abline(a = 0, b = 1, col = "red")
 
 data.frame(lamhyp, 
@@ -434,7 +438,7 @@ data.frame(lamhyp,
   mutate(Diff = RCP85 - Now) %>% 
   mutate(Flag = ifelse(Diff < 0, "Negative", ifelse(Diff > 0, "Positive", "Neutral"))) %>% 
   ggplot(aes(x = X, y = Y)) +
-  geom_point(aes(color = Flag), alpha = 0.7) 
+  geom_point(aes(color = Flag), alpha = 0.2) 
 
 
 data.frame(lamhyp, 
@@ -454,7 +458,7 @@ data.frame(lamhyp,
   ggplot(aes(x = Diff, fill = Flag)) +
   geom_histogram()
 
-# Egentlig ingen store endringer ...
+# Egentlig ingen store endringer når lys ikke tas med...
 
 # interessant å se hva som skjer dersom vi legger på endringer i lys
 # tenker vi da manipulerer dyp som en proxy til lysreduksjon
@@ -474,8 +478,9 @@ data.frame(lamhyp,
 
 # How does the difference relate to environmental variables?
 # Clear relationships with Maxtemp and Meantemp, less so with salinity - 
+# Not so clear when light/depth adjustment is included
 # Perhaps also with nutrients? Maybe interesting to look at the  
-# interaction between temperature and nutrients
+# interaction between temperature and nutrients?
 
 data.frame(lamhyp %>% left_join(responsvar) %>%
              left_join(obs.points) %>% 
@@ -522,6 +527,13 @@ gbm.perspec(lamhyp.manual.cut.gbm, 4, 9,
 gbm.perspec(lamhyp.manual.cut.gbm, 4, 10,
             z.range = c(-1, 3))
 
-
 # Kan flekkvis negativ utvikling i framtidsprediksjoner skyldes høye kons av næringssalter?
 
+# Interactions light/depth and temperature
+
+gbm.perspec(lamhyp.manual.cut.gbm, 3, 1,
+            z.range = c(-1, 3))
+
+gbm.perspec(lamhyp.manual.cut.gbm, 4, 1,
+            z.range = c(-1, 3))
+# Interesting pattern for maxtemp. Obvious narrowing of vertical range with higher temperature!

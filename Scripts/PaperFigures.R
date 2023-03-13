@@ -103,7 +103,7 @@ map1 <- leaflet(lamgeo,
   addCircles(color = ~Farge, opacity = 0.8, fillColor = ~Farge, fillOpacity = 0.8) %>% 
   addScaleBar("topleft") %>% 
   addLegend("bottomright", pal = gradpal, values = ~ Tetthet,
-            title = "Predicted density </br> of tangle kelp </br> (plants m<sup>-2</sup>)") %>% 
+            title = "Observed density </br> of tangle kelp </br> (plants m<sup>-2</sup>)") %>% 
   setView(lng = 16, lat = 65.5, zoom = 5)
 
 map1
@@ -121,7 +121,7 @@ map2 <- leaflet(sacgeo,
   addCircles(color = ~Farge, opacity = 0.8, fillColor = ~Farge, fillOpacity = 0.8) %>% 
   addScaleBar("topleft") %>% 
   addLegend("bottomright", pal = gradpal_sac, values = ~ Tetthet,
-            title = "Predicted density </br> of sugar kelp </br> (plants m<sup>-2</sup>)") %>% 
+            title = "Observed density </br> of sugar kelp </br> (plants m<sup>-2</sup>)") %>% 
   setView(lng = 16, lat = 65.5, zoom = 5) 
 map2
 
@@ -467,5 +467,6 @@ saclat_rastertable %>% data.frame() %>%
 # Sjekk Frigstad et al ...
 # Extreme differences in the predictions of S. latissima forest areas
 # I do trust this model more than the previous (range of values etc. seems much more realistic)
+# Har dobbeltsjekka med å regne ut i excel og kommer til samme arealer
 
 
