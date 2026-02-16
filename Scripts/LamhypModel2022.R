@@ -14,9 +14,10 @@ require(patchwork)
 require(gbm) # Generalized Boosted Regression Models
 require(dismo) # Species Distribution Modeling
 require(corrplot)
+maindir <- "D:\\Taremodeller\\NorwegianKelpModels"
 
 # Data --------------------------------------------------------------------
-lamhyp <- read.csv("./Data/lamhyp2022.csv", stringsAsFactors = FALSE)
+lamhyp <- read.csv(paste(maindir, "./Data/lamhyp2022.csv", sep="/"), stringsAsFactors = FALSE)
 str(lamhyp)
 names(lamhyp)
 summary(lamhyp)

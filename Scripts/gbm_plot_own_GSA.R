@@ -1,11 +1,9 @@
 # Own version of gbm.plot 
 # Modified from Kristina Kviles version
 
-gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, 
-                         s.col = "aquamarine4",
-                         ylim = c(-2.5,3), y.label = "", varnames=NULL, 
-                         with_yax=c(1,7),
-                         xlim_n=0, range_n=c(-2,71)) 
+gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, tag = "A",
+                         s.col = "aquamarine4",ylim = c(-1,1), varnames=NULL, showmean = TRUE, 
+                         with_yax=c(1,7),species="kelp") 
 {
   
   n <- length(gbm.object$var.names)
@@ -21,23 +19,27 @@ gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE,
     response.matrix <- gbm::plot.gbm(gbm.object, k, return.grid = TRUE)
     response.matrix[,2] <- response.matrix[,2] - mean(response.matrix[,2])
     smoothed <- loess(response.matrix[,2] ~ response.matrix[,1], span = 0.3)
+    print(varname)
+    idx <- which.min(abs(response.matrix$y))
+    print(response.matrix[[1]][idx])
+    
     
     vardat <- dat[, gbm.object$gbm.call$gbm.x[k]]
-    #vardat_pres <- vardat[dat$PresAbs==1]
+    vardat_pres <- vardat[dat$Tetthet>0]
+    vardat_mean <- mean(vardat[dat$Tetthet>0], na.rm=T)
     
-    if(j==xlim_n){
-      plot(response.matrix, type="l", ylab="", xlab="", ylim = ylim, xlim=range_n, lty="dotted", col=s.col, lwd = 1.5);
-      mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2.5)
-    }else if (j%in%with_yax){
-      plot(response.matrix, type="l", ylab="", xlab=xlab, ylim = ylim, lty="dotted", col=s.col, lwd = 1.5);
+    if (j%in%with_yax){
+      plot(response.matrix, type="l", ylab="", xlab=xlab, ylim = ylim, col=s.col, lwd = 1);
       mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2.5)
     }else{
-      plot(response.matrix, type="l", ylab="", xlab=xlab, ylim = ylim, lty="dotted", col=s.col, axes=FALSE,frame=TRUE, lwd = 1.5);
+      plot(response.matrix, type="l", ylab="", xlab=xlab, ylim = ylim, col=s.col,  axes=FALSE,frame=TRUE, lwd = 1);
       Axis(side=1);Axis(side=2,labels = FALSE);mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2.5)}
     if(smooth){points(response.matrix[,1],smoothed$fitted, type = "l", lwd=2)}
-    if(rug){rug(vardat, col=s.col)}
+    if(rug){rug(vardat_pres, col=s.col)}
+    if(showmean){abline(v = vardat_mean, col=s.col, lty="dotted", , lwd = 0.75)}
+    if(j==1){mtext(side = 3, tag, outer = FALSE, line = 0,  cex = 1.25, adj = -0.4)}  
   }
-  # mtext(side=2, "Partial effect", outer = TRUE, cex = 0.7, line = 1)
+  mtext(side=2, paste0("Marginal effect on ",species), outer = TRUE, cex = 0.7, line = 1)
 }
 
 
