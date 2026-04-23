@@ -505,7 +505,8 @@ webshot2::webshot(out_html, file = out_png, vwidth = 700, vheight = 744, delay =
 
 
 # Zoomed in areas ----------------------------------------------------------
-ext_ll <- ext(5.35, 5.95, 62.25, 62.43)
+ext_ll <- ext(5.35, 5.95, 62.25, 62.43) # Runde area
+ext_ll <- ext(12, 12.20, 65.8, 65.93) # Vega area
 ext_poly  <- as.polygons(ext_ll, crs = "EPSG:4326")
 ext_poly2 <- project(ext_poly, crs(predfinal))     
 ext_new   <- ext(ext_poly2)
@@ -516,7 +517,6 @@ lamhyp_plot_zoom <- project(lamhyp_plot_zoom, "EPSG:4326", method = "bilinear")
 # Covnert to raster for leaflet::addRasterimage
 lamhyp_plot_zoom <- raster::raster(lamhyp_plot_zoom)
 lamhyp_plot_zoom[lamhyp_plot_zoom < 1] <- NA
-
 
 #ext(lamhyp_plot_zoom_zoom)
 vals <- raster::values(lamhyp_plot_zoom)
@@ -531,8 +531,15 @@ tm_shape(lamhyp_plot_zoom) +
 # Color gradients
 gradpal2 <- colorNumeric(palette = "Spectral", domain = rng, na.color = "transparent", reverse = TRUE)
 
+# Runde:
 lng_zoom <- 5.6
 lat_zoom <- 62.35
+zoom <- 11.5
+
+# Vega:
+lng_zoom <- 12.12
+lat_zoom <- 65.91
+zoom <- 10
 
 predmap1 <- leaflet(lamhyp_plot_zoom,
                     options = leafletOptions(
@@ -543,7 +550,7 @@ predmap1 <- leaflet(lamhyp_plot_zoom,
   addLegend("bottomright", pal = gradpal2, values = vals,
             title = "Predicted density </br> of tangle kelp </br> (ind.m<sup>-2</sup>)") %>% 
   addControl(html = "<b style='font-size:20px;'>A</b>", position = "topleft") %>%
-  setView(lng = lng_zoom, lat = lat_zoom, zoom = 11.5)
+  setView(lng = lng_zoom, lat = lat_zoom, zoom = zoom)
 
 predmap1
 
@@ -667,10 +674,16 @@ saclat_rastertable <- tibble(value = thresholds) %>%
   area_km_cum = count_ge * cell_area_m2 / 1e6
   )
 
-# write.csv(saclat_rastertable, file = "../Tables/saclat_rastertable_full.csv", row.names = FALSE)
+write.csv(saclat_rastertable, file = "../Tables/saclat_rastertable_full.csv", row.names = FALSE)
 
-lamhyp_rastertable <- read.csv("../Tables/lamhyp_rastertable_full.csv")  
+lamhyp_rastertable <- read.csv("../Tables/lamhyp_rastertable_full.csv")
+  
 saclat_rastertable <- read.csv("../Tables/saclat_rastertable_full.csv")  
+
+area_lam_1_to_4 <- lamhyp_rastertable %>%
+  filter(value < 5) %>%
+  mutate(area_km_sum = sum(area_km)) %>%
+  pull(area_km_sum)
 
 area_lim_lam_5 <- lamhyp_rastertable %>%
   filter(value == 5) %>%
@@ -680,10 +693,11 @@ area_lim_lam_1 <- lamhyp_rastertable %>%
   filter(value == 1) %>%
   pull(area_km_cum)
 
+
 areaplot_lam <- lamhyp_rastertable %>% 
-  ggplot(aes(x = value, y = area_km_sum)) +
-  geom_line(color = "steelblue", linewidth = 1) +
-  geom_point(color = "steelblue") +
+  ggplot(aes(x = value)) +
+  geom_line(aes(y = area_km_cum), color = "steelblue", linewidth = 1) +
+  geom_point(aes(y = area_km_cum), color = "steelblue") +
   geom_vline(xintercept = 5, color = "grey40", linewidth = 0.9, linetype = "dashed") +
   geom_hline(yintercept = area_lim_lam_5, color = "grey40", linewidth = 0.9, linetype = "dashed") +
   geom_hline(yintercept = area_lim_lam_1, color = "grey40", linewidth = 0.9, linetype = "dashed") +
@@ -697,24 +711,33 @@ areaplot_lam <- lamhyp_rastertable %>%
            y = area_lim_lam_1,
            label = paste0("Area = ", round(area_lim_lam_1), " km²"),
            vjust = -0.5, hjust = 1, size = 4) +
-  labs(x = "Density threshold (ind. m⁻²)", y = "Predicted extent of tangle kelp (km²)", tag = "A") +
-  theme_bw(base_size = 14) + 
+  # dual y-axis
+  scale_y_continuous(name = "Predicted extent (km²)",
+                     sec.axis = sec_axis(trans = ~ 100 * (. - area_lim_lam_5) / area_lim_lam_5)) +
+  labs(x = "Density threshold (ind. m⁻²)", title = "Tangle kelp",
+       tag = "A.") +
+  theme_bw(base_size = 14) +
   theme(panel.grid.minor = element_line(color = "grey90"),
-        plot.tag = element_text(size = 18, face = "bold"),
-        plot.tag.position = c(0.02, 0.98))
+    plot.tag = element_text(size = 18, face = "bold"),
+    plot.tag.position = c(0.02, 0.98) )
+
+area_sac_1_to_7 <- saclat_rastertable %>%
+  filter(value < 7) %>%
+  mutate(area_km_sum = sum(area_km)) %>%
+  pull(area_km_sum)
 
 area_lim_sac_7 <- saclat_rastertable %>%  
   filter(value == 7) %>%
-  pull(area_km_sum)
+  pull(area_km_cum)
 
 area_lim_sac_1 <- saclat_rastertable %>%  
   filter(value == 1) %>%
-  pull(area_km_sum)
+  pull(area_km_cum)
 
 areaplot_sac <- saclat_rastertable %>%
-  ggplot(aes(x = value, y = area_km_sum)) +
-  geom_line(color = "steelblue", linewidth = 1) +
-  geom_point(color = "steelblue") +
+  ggplot(aes(x = value)) +
+  geom_line(aes(y = area_km_cum), color = "steelblue", linewidth = 1) +
+  geom_point(aes(y = area_km_cum), color = "steelblue") +
   geom_vline(xintercept = 7, color = "grey40", linewidth = 0.9, linetype = "dashed") +
   geom_hline(yintercept = area_lim_sac_1, color = "grey40", linewidth = 0.9, linetype = "dashed") +
   geom_hline(yintercept = area_lim_sac_7, color = "grey40", linewidth = 0.9, linetype = "dashed") +
@@ -728,7 +751,11 @@ areaplot_sac <- saclat_rastertable %>%
            y = area_lim_sac_1,
            label = paste0("Area = ", round(area_lim_sac_1), " km²"),
            vjust = -0.5, hjust = 1, size = 4) +
-  labs(x = "Density threshold (ind. m⁻²)", y = "Predicted extent of sugar kelp (km²)", tag = "B") +
+  # dual y-axis
+  scale_y_continuous(name = "",
+                     sec.axis = sec_axis(trans = ~ 100 * (. - area_lim_sac_7) / area_lim_sac_7,
+                                         name = "Change in estimated extent (%)")) +
+  labs(x = "Density threshold (ind. m⁻²)", tag = "B", title = "Sugar kelp") +
   theme_bw(base_size = 14) + 
   theme(panel.grid.minor = element_line(color = "grey90"),
         plot.tag = element_text(size = 18, face = "bold"),

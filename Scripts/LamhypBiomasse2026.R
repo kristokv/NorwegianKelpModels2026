@@ -31,13 +31,11 @@ sumLAMHY # kg
 sumLAMHY / 1e9 # in million tonnes
 
 # Splitting the estimate into forest and non-forest 
-biomass_lowdens_kg <- global(tot_kg_LAMHY * (predLAMHYdens < 5), "sum",  na.rm = TRUE)[1, 1]
-
-# biomass where density ≥ 5
-biomass_forest_kg <- global(tot_kg_LAMHY * (predLAMHYdens >= 5), "sum",  na.rm = TRUE)[1, 1]
-
-
-zonalLAMHYdens_kg <- data.frame(Category = c("Density < 5", "Density ≥ 5"),  Biomass_kg = c(biomass_lowdens_kg, biomass_forest_kg))
-write.csv(file = "../Tables/zonalLAMHYdens_kg.csv", row.names = FALSE)
+zonalLAMHYdens_kg <-  tibble(Category = c("Density < 5 ind. m⁻²", "Density ≥ 5 ind. m⁻²"),
+    Biomass_kg = c(global(tot_kg_LAMHY * (predLAMHYdens < 5),  "sum", na.rm = TRUE)[1, 1],
+      global(tot_kg_LAMHY * (predLAMHYdens >= 5), "sum", na.rm = TRUE)[1, 1])) %>%
+  mutate(Biomass_Mt = Biomass_kg / 1e9)  
+  
+write.csv(zonalLAMHYdens_kg, file = "../Tables/zonalLAMHYdens_kg.csv", row.names = FALSE)
 
 
