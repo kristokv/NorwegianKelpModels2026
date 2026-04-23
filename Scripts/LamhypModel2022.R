@@ -14,7 +14,8 @@ require(patchwork)
 require(gbm) # Generalized Boosted Regression Models
 require(dismo) # Species Distribution Modeling
 require(corrplot)
-maindir <- "D:\\Taremodeller\\NorwegianKelpModels"
+#maindir <- "D:\\Taremodeller\\NorwegianKelpModels"
+maindir <-  "C:/Users/KVI/OneDrive - NIVA/NordicBlueForests/NorwegianModel/github/NorwegianKelpModels"
 
 # Data --------------------------------------------------------------------
 lamhyp <- read.csv(paste(maindir, "./Data/lamhyp2022.csv", sep="/"), stringsAsFactors = FALSE)

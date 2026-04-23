@@ -1,7 +1,7 @@
 # Own version of gbm.plot 
 # Modified from Kristina Kviles version
 
-gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, tag = "A",
+gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, tag = "A", xrange_pres = FALSE,
                          s.col = "aquamarine4",ylim = c(-1,1), varnames=NULL, showmean = TRUE, 
                          with_yax=c(1,7),species="kelp") 
 {
@@ -23,16 +23,20 @@ gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, tag = "A",
     idx <- which.min(abs(response.matrix$y))
     print(response.matrix[[1]][idx])
     
-    
     vardat <- dat[, gbm.object$gbm.call$gbm.x[k]]
     vardat_pres <- vardat[dat$Tetthet>0]
     vardat_mean <- mean(vardat[dat$Tetthet>0], na.rm=T)
     
+    if (xrange_pres == TRUE){
+      xlims =  range(vardat_pres, na.rm=T)
+    }else{
+      xlims =  range(vardat, na.rm=T)}
+    
     if (j%in%with_yax){
-      plot(response.matrix, type="l", ylab="", xlab=xlab, ylim = ylim, col=s.col, lwd = 1);
+      plot(response.matrix, type="l", ylab="", xlab=xlab, xlim = xlims, ylim = ylim, col=s.col, lwd = 1);
       mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2.5)
     }else{
-      plot(response.matrix, type="l", ylab="", xlab=xlab, ylim = ylim, col=s.col,  axes=FALSE,frame=TRUE, lwd = 1);
+      plot(response.matrix, type="l", ylab="", xlab=xlab, xlim = xlims, ylim = ylim, col=s.col,  axes=FALSE,frame=TRUE, lwd = 1);
       Axis(side=1);Axis(side=2,labels = FALSE);mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2.5)}
     if(smooth){points(response.matrix[,1],smoothed$fitted, type = "l", lwd=2)}
     if(rug){rug(vardat_pres, col=s.col)}

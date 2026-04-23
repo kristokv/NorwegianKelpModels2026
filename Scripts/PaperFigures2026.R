@@ -17,13 +17,13 @@ require(patchwork)
 require(writexl)
 
 
-maindir <- "D:\\Taremodeller\\NorwegianKelpModels"
+maindir <- "D:\\Taremodeller\\NorwegianKelpModels_bigfiles"
 
 # Models
-lamhyp.manual.cut.gbm <- readRDS(paste(maindir, "Models/lamhyp.manual.cut.gbm.rds", sep ="/"))
+lamhyp.manual.cut.gbm <- readRDS("../Models/lamhyp.manual.cut.gbm.rds")
 lamhyp.manual.cut.gbm$var.names
 
-saclat.simp.manual.gbm <- readRDS(paste(maindir, "Models/saclat.simp.manual.gbm_v3.rds", sep ="/"))
+saclat.simp.manual.gbm <- readRDS("../Models/saclat.simp.manual.gbm_v3.rds")
 saclat.simp.manual.gbm$var.names
 
 # Data
@@ -41,7 +41,7 @@ lamdens <- lamhyp %>% dplyr::select(X, Y, Tetthet, Coverage, Year_HGU,
 
 #lamdens %>% dplyr::select(Tetthet, Coverage) %>% table
 
-saclat <- read.csv(paste(maindir, "./Data/saclat2022.csv", sep = "/"), stringsAsFactors = FALSE) %>% 
+saclat <- read.csv("../Data/saclat2022.csv") %>% 
   filter(!is.na(Tetthet)) # Fjerner en NA
 #saclat %>% head
 
@@ -233,7 +233,19 @@ varnames_match <- setNames(c("Depth, m",  "Wave exposure, m2/s", "Curvature, m",
                      c("Depth_mod", "swm", "curv500","slope", "Nitrate.Mean", "Dissolved.oxygen.Mean" ,"Phosphate.Mean",
                        "Meantemp", "Maxtemp", "wspd90", "BO2_salinitymax_bdmean"))
 
-
+# lamhyp_pres <- lamhyp %>%
+#   filter(Tetthet >0)
+# 
+# saclat_pres <- saclat %>%
+#   filter(Tetthet >0)
+# 
+# xranges <- tibble(variable = names(varnames_match),) %>%
+#   mutate(xmin = map_dbl(variable, ~ min(lamhyp_pres[[.x]],
+#                                         saclat_pres[[.x]], na.rm = TRUE
+#     )),
+#     xmax = map_dbl(variable, ~ max(
+#       lamhyp_pres[[.x]], saclat_pres[[.x]], na.rm = TRUE)))
+# 
 
 # gbm.plot(lamhyp.manual.cut.gbm, write.title=TRUE, show.contrib=TRUE,
 #          common.scale = TRUE,
@@ -246,7 +258,7 @@ varnames_lamhyp <- unname(varnames_match[lamhyp.manual.cut.gbm$contributions$var
 png("../Figures/MarginalEffectsLamhyp.png", width = 2700, height = 1500, res = 300)
 par(mar=c(2.5,2,1.5,0), oma = c(1.5,2,0,1), mfrow = c(2,6))
 gbm.plot.own(lamhyp.manual.cut.gbm, dat = lamhyp, varnames = varnames_lamhyp,
-             with_yax=c(1,6),species="tangle kelp", tag = "A")
+             xrange_pres = TRUE, with_yax=c(1,6),species="tangle kelp", tag = "A")
 dev.off()
 
 varnames_saclat <-  unname(varnames_match[saclat.simp.manual.gbm$contributions$var])
@@ -254,7 +266,7 @@ varnames_saclat <-  unname(varnames_match[saclat.simp.manual.gbm$contributions$v
 png("../Figures/MarginalEffectsSaclat.png", width = 2700, height = 1500, res = 300)
 par(mar=c(2.5,2,1.5,0), oma = c(1.5,3,0,1), mfrow = c(2,6))
 gbm.plot.own(saclat.simp.manual.gbm, dat = saclat, varnames = varnames_saclat, tag = "B",
-             with_yax=c(1,6),species="sugar kelp")
+             xrange_pres = TRUE, with_yax=c(1,6),species="sugar kelp")
 dev.off()
 
 # Plot only oxygen effect
@@ -372,7 +384,8 @@ gbm.perspec(saclat.simp.manual.gbm, 4, 3,
 # Map predictions ---------------------------------------------------------
 
 # Lamhyp downsample:
-predfinal <- rast("../Predictions/predLAMHYdens2022_full.grd") 
+#predfinal <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_full.grd")) 
+predfinal <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_crop40.grd")) 
 
 #hist(predfinal[predfinal > 0])
 
@@ -384,7 +397,7 @@ predfinal <- rast("../Predictions/predLAMHYdens2022_full.grd")
 
 
 # Saclat downsample:
-predfinal_sac <- rast("../Predictions/predSACLATdens2022_crop40.grd")
+predfinal_sac <- rast(paste0(maindir,"\\Predictions\\predSACLATdens2022_crop40.grd"))
 #predfinal_sac <- rast("../Predictions/SACpred_Norway.tif")
 
 # Model now truncated at 40 m depth
@@ -582,37 +595,90 @@ webshot2::webshot(out_html, file = out_png, vwidth = 700, vheight = 744, delay =
 
 # Area summaries ----------------------------------------------------------
 # Estimate area depending on threshold
-# lamhyp_rastertable <- freq(predfinal)
-# 
-# lamhyp_rastertable <- lamhyp_rastertable %>%  
-#   filter(value > 0) %>% 
-#   dplyr::select(!layer) %>% 
+#predfinal_full <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_full.grd")) 
+predfinal_crop <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_crop40.grd")) 
+
+# Old method, faster but somewhat less precise:
+# lamhyp_rastertable_crop <- freq(predfinal_crop)
+# lamhyp_rastertable_old <- lamhyp_rastertable_crop %>%
+#   filter(value > 0) %>%
+#   dplyr::select(!layer) %>%
 #   mutate(area_m = count*25*25,
-#          area_km = area_m/1e+06) %>% 
+#          area_km = area_m/1e+06) %>%
 #   mutate(area_km_sum = rev(cumsum(rev(area_km))))
-# 
-# write.csv(lamhyp_rastertable, file = "../Tables/lamhyp_rastertable_full.csv", row.names = FALSE)
-# 
-# saclat_rastertable <- freq(predfinal_sac)
-# 
-# saclat_rastertable <- saclat_rastertable %>%  
-#   filter(!is.na(value)) %>% 
-#   filter(value > 0) %>% 
-#   mutate(area_m = count*25*25,
-#          area_km = area_m/1e+06) %>% 
-#   mutate(area_km_sum = rev(cumsum(rev(area_km))))
-# 
+
+cell_area_m2 <- prod(res(predfinal_crop))  # m² per cell
+
+# Laminaria:
+r_max <- global(predfinal_crop, "max", na.rm = TRUE)[1, 1]
+thresholds <- seq(from = 1, to   = floor(r_max),  by   = 1)
+
+lamhyp_rastertable <- tibble(value = thresholds) %>%
+  mutate(count_eq = vapply(
+      value,
+      function(v) {
+        global(
+          predfinal_crop >= v & predfinal_crop < (v + 1),
+          "sum",
+          na.rm = TRUE
+        )[1, 1]
+      },
+      numeric(1)
+    ),
+    count_ge = vapply(
+      value,
+      function(v) {
+        global(predfinal_crop >= v, "sum", na.rm = TRUE)[1, 1]
+      },
+      numeric(1)
+    ),
+    area_km = count_eq * cell_area_m2 / 1e6,
+    area_km_cum = count_ge * cell_area_m2 / 1e6
+  )
+
+
+write.csv(lamhyp_rastertable, file = "../Tables/lamhyp_rastertable_full.csv", row.names = FALSE)
+
+
+# Saccharina:
+r_max <- global(predfinal_sac, "max", na.rm = TRUE)[1, 1]
+thresholds <- seq(from = 1, to   = floor(r_max),  by   = 1)
+
+saclat_rastertable <- tibble(value = thresholds) %>%
+  mutate(count_eq = vapply(
+    value,
+    function(v) {
+      global(
+        predfinal_sac >= v & predfinal_sac < (v + 1),
+        "sum",
+        na.rm = TRUE
+      )[1, 1]
+    },
+    numeric(1)
+  ),
+  count_ge = vapply(
+    value,
+    function(v) {
+      global(predfinal_sac >= v, "sum", na.rm = TRUE)[1, 1]
+    },
+    numeric(1)
+  ),
+  area_km = count_eq * cell_area_m2 / 1e6,
+  area_km_cum = count_ge * cell_area_m2 / 1e6
+  )
+
 # write.csv(saclat_rastertable, file = "../Tables/saclat_rastertable_full.csv", row.names = FALSE)
 
 lamhyp_rastertable <- read.csv("../Tables/lamhyp_rastertable_full.csv")  
 saclat_rastertable <- read.csv("../Tables/saclat_rastertable_full.csv")  
 
-area_lim_lam_5 <- lamhyp_rastertable %>%  
+area_lim_lam_5 <- lamhyp_rastertable %>%
   filter(value == 5) %>%
-  pull(area_km_sum)
+  pull(area_km_cum)
 
-area_lim_lam_1 <- lamhyp_rastertable %>%  
-  filter(value == 1) %>% pull(area_km_sum)
+area_lim_lam_1 <- lamhyp_rastertable %>%
+  filter(value == 1) %>%
+  pull(area_km_cum)
 
 areaplot_lam <- lamhyp_rastertable %>% 
   ggplot(aes(x = value, y = area_km_sum)) +

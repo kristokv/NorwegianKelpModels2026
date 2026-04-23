@@ -168,6 +168,8 @@ for (i in 1:tr$n){
 predr.LHbiomass <- writeStop(predr.LHbiomass)
 
 predr.LHbiomass <- raster("./Predictions/predLAMHYbiomass2022")
+
+
 # Sjekk verdier. Vær obs på om det er estimert veldig høye verdier i områder der tettheter sannsynligvis er veldig lave
 # Mulig små verdier (nesten null) da vil få litt høye biomasse-estimater?
 predr.LHbiomass
