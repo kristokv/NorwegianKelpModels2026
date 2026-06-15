@@ -5,37 +5,45 @@
 # Pakker
 require(readxl)
 require(tidyverse)
-require(raster)
-require(rgeos)
-require(rgdal)
-require(dismo)
+#require(raster)
+require(terra)
+#require(rgeos)
+#require(rgdal)
+#require(dismo)
+#library(mgcv)
 
-library(mgcv)
+maindir <- "D:\\Taremodeller\\NorwegianKelpModels_bigfiles"
 
-maindir <- "D:\\Taremodeller\\NorwegianKelpModels_bigfiles\\Predictions\\"
+predr.LHbiomass_reclass <- rast(paste0(maindir,"\\Predictions\\predLAMHYbiomass2022_reclass.grd")) # g/ind per grid cell
 
-predr.LHbiomass_reclass <- rast(paste0(maindir,"predLAMHYbiomass2022_reclass.grd")) # g/ind per grid cell
 predLAMHYdens <- rast(paste0(maindir,"predLAMHYdens2022_crop40.grd")) # ind per m2 per grid cell
 # Calculate g per m2 per grid cell
 biomassLAMHYm2 <- predLAMHYdens * predr.LHbiomass_reclass
 # Set negative values to 0
 biomassLAMHYm2_reclass <- ifel(biomassLAMHYm2 <= 0, 0, biomassLAMHYm2)
 # Converting to total biomass per grid cell (kg)
-tot_kg_LAMHY <- biomassLAMHYm2_reclass * 0.625 # (* 625 / 1000)cells of 25 m2, expressed in kg rather than grams
+tot_kg_LAMHY <- biomassLAMHYm2_reclass * 0.625 # (* 625 / 1000) cells of 25 m2, expressed in kg rather than grams
 
-writeRaster(tot_kg_LAMHY,  filename = paste0(maindir, "tot_kg_LAMHY.grd"), overwrite = TRUE)
+writeRaster(tot_kg_LAMHY,  filename = paste0(maindir, "\\Predictions\\tot_kg_LAMHY.grd"), overwrite = TRUE)
 
-# Total weight
-sumLAMHY <- global(tot_kg_LAMHY, "sum", na.rm = TRUE)[1, 1]
-sumLAMHY # kg
-sumLAMHY / 1e9 # in million tonnes
 
-# Splitting the estimate into forest and non-forest 
-zonalLAMHYdens_kg <-  tibble(Category = c("Density < 5 ind. m⁻²", "Density ≥ 5 ind. m⁻²"),
-    Biomass_kg = c(global(tot_kg_LAMHY * (predLAMHYdens < 5),  "sum", na.rm = TRUE)[1, 1],
-      global(tot_kg_LAMHY * (predLAMHYdens >= 5), "sum", na.rm = TRUE)[1, 1])) %>%
-  mutate(Biomass_Mt = Biomass_kg / 1e9)  
-  
-write.csv(zonalLAMHYdens_kg, file = "../Tables/zonalLAMHYdens_kg.csv", row.names = FALSE)
+# Get average ind. biomass to scale for Saccharina 
+pathtofile<-"C:/Users/KVI/NIVA/240142 - The impact of climate change on Arctic blue carbon - WP2/01_Data/02_Biomass_data//02_Svalbard/Saccharina_Düsedau et al 2024.xlsx"
+
+sacla_g_mean <- read_xlsx(pathtofile, skip = 46) %>%
+  rename(ww_g = "Biom wm [g]", age= "Stipe age [a]") %>% 
+  filter(!is.na(age) & age>1) %>% 
+  summarize(mean = mean(ww_g, na.rm=T))
+
+predfinal_sac <- rast(paste0(maindir,"\\Predictions\\predSACLATdens2022_crop40.grd"))
+cell_area_m2 <- prod(res(predfinal_sac))  # m² per cell
+
+tot_kg_SACLA <- predfinal_sac * as.numeric(sacla_g_mean/1000) * cell_area_m2
+# Set negative values to 0
+tot_kg_SACLA <- ifel(tot_kg_SACLA <= 0, 0, tot_kg_SACLA)
+
+terraOptions(memfrac = 0.8, progress = 1, numThreads = parallel::detectCores())
+writeRaster(tot_kg_SACLA,filename = file.path(maindir, "Predictions", "tot_kg_SACLA.tif"), overwrite = TRUE,  gdal = c("COMPRESS=NONE", "NUM_THREADS=ALL_CPUS"))
+
 
 

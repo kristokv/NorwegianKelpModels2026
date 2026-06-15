@@ -1,23 +1,70 @@
 ## Paper figures
 require(tidyverse)
 require(dismo)
-require(Hmisc)
+#require(Hmisc)
 require(gbm)
 require(tmap)
 require(sf)
 require(sp)
-require(leaflet)
-require(leafletCN) # NOT AVAILABLE
-require(mapview)
-require(tmap)
-require(webshot)
-require(webshot2)
+require(scales)
+#require(leaflet)
+#require(mapview)
+#require(tmap)
+#require(webshot)
+#require(webshot2)
+require(RColorBrewer)
+require(rnaturalearth)
+require(rnaturalearthdata)
+require(rnaturalearthhires)
+require(osmdata)
+require(readxl)
+
 require(terra)
 require(patchwork)
-require(writexl)
+#require(writexl)
 
 
 maindir <- "D:\\Taremodeller\\NorwegianKelpModels_bigfiles"
+
+# Basemap for plotting
+land <- ne_countries(scale = "large", returnclass = "sf")
+
+labels_df <- data.frame(
+  name = c("North Sea", "Norwegian Sea", "Barents Sea",
+           "NORWAY", "SWEDEN", "FINLAND"),
+  lon = c(5.2, 7, 30,
+          9, 16, 26.5),
+  lat = c(57.85, 66, 71.8,
+          62, 63, 64))
+
+basemap <- ggplot() +
+  geom_sf(data = land,
+          fill = "grey90",
+          color = "grey70",
+          size = 0.2) +
+  geom_text(data = labels_df,
+            aes(x = lon, y = lat, label = name),
+            size = 5,
+            fontface = "bold",
+            color = "grey40") +
+  theme_minimal(base_size = 14) +
+  theme(panel.grid = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        legend.position = c(0.85, 0.2),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.background = element_rect(fill = "white", color = "grey50"))
+
+# Find total available area (<40 m depth)
+dem <- rast("D:/QGISprojects/EelgrassBlueConnect/input_GIS/BathyAndTerrain/DEM25Norge.tif")
+
+dem_bin <- dem >= -40
+n_cells <- global(dem_bin, "sum", na.rm=TRUE)[1,1]
+cell_area <- prod(res(dem))  # 25 * 25 = 625 m²
+area_m2 <- n_cells * cell_area
+area_km2 <- area_m2 / 1e6
+
 
 # Models
 lamhyp.manual.cut.gbm <- readRDS("../Models/lamhyp.manual.cut.gbm.rds")
@@ -54,63 +101,49 @@ sacdens <- saclat %>% dplyr::select(X, Y, Tetthet, Coverage, Year_HGU,
 #summary(sacdens)
 
 # Observational data ----------------------------------------------------------------
+pal <- brewer.pal(9, "YlOrRd")
 
-# Color gradients
-grad <- c(seq(from = 0, to = 10, by = 0.5))
-grad
-gradpal <- colorNumeric("Greens", grad)
-gradpal(4)
+lam_sf <- st_as_sf(lamdens, coords = c("X", "Y"), crs = 4326)
 
-grad_sac <- c(seq(from = 0, to = 15, by = 0.5))
-grad_sac
-gradpal_sac <- colorNumeric("Reds", grad_sac)
-gradpal_sac(4)
-
-# SpatialPoints dataframes
-lamgeo <- SpatialPointsDataFrame(coords = lamdens %>% dplyr::select(X,Y),
-                                 data = lamdens %>% mutate(Farge = gradpal(Tetthet)), 
-                                 proj4string = CRS("+proj=longlat +datum=WGS84"))
-
-sacgeo <- SpatialPointsDataFrame(coords = sacdens %>% dplyr::select(X,Y),
-                                 data = sacdens %>% mutate(Farge = gradpal_sac(Tetthet)), 
-                                 proj4string = CRS("+proj=longlat +datum=WGS84"))
-
-
-map1 <- leaflet(lamgeo,
-                options = leafletOptions(
-  attributionControl=FALSE,
-  zoomControl = FALSE)) %>% # removed zoom control for better export to small image
-  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB
-  addCircles(color = ~Farge, opacity = 0.8, fillColor = ~Farge, fillOpacity = 0.8) %>% 
-  #addScaleBar("topleft") %>% 
-  addLegend("bottomright", pal = gradpal, values = ~ Tetthet,
-            title = "Observed density </br> of tangle kelp </br> (ind. m<sup>-2</sup>)") %>% 
-  addControl(html = "<b style='font-size:20px;'>A</b>", position = "topleft") %>%
-  setView(lng = 16, lat = 65.5, zoom = 5)
+map1 <- basemap +
+  geom_sf(data = lam_sf,
+          aes(color = Tetthet),
+          size = 1,
+          alpha = 0.5) +
+  scale_color_gradientn(colours = pal,
+                        limits = c(1, 15),   
+                        oob = scales::squish, 
+                        name = "Tangle kelp density\n(ind. m⁻²)",
+                        guide = guide_colorbar(reverse = FALSE) ) +
+  labs(tag = "A") +
+  coord_sf(xlim = c(3, 34),
+           ylim = c(57.6, 72),
+           expand = FALSE)
 
 map1
 
+ggsave("../Figures/LamhypSampleMap_v4.png", map1, width = 180, height = 200, dpi = 300, units = "mm") 
 
-mapshot(map1, file = paste(maindir, "Figures/LamhypSampleMap_v3.png", sep = "/"), 
-        remove_controls = c("zoomControl", "layersControl"),
-        vwidth = 700, vheight = 744)
+sac_sf <- st_as_sf(sacdens, coords = c("X", "Y"), crs = 4326)
 
-map2 <- leaflet(sacgeo,
-                options = leafletOptions(
-                  attributionControl=FALSE,
-                  zoomControl = FALSE)) %>% # removed zoom control for better export to small image 
-  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB #Esri.WorldGrayCanvas
-  addCircles(color = ~Farge, opacity = 0.8, fillColor = ~Farge, fillOpacity = 0.8) %>% 
-  #addScaleBar("topleft") %>% 
-  addLegend("bottomright", pal = gradpal_sac, values = ~ Tetthet,
-            title = "Observed density </br> of sugar kelp </br> (ind. m<sup>-2</sup>)") %>% 
-  addControl(html = "<b style='font-size:20px;'>B</b>", position = "topleft") %>%
-  setView(lng = 16, lat = 65.5, zoom = 5) 
+map2 <- basemap +
+  geom_sf(data = sac_sf,
+          aes(color = Tetthet),
+          size = 1,
+          alpha = 0.5) +
+  scale_color_gradientn(colours = pal,
+                        limits = c(1, 15),   
+                        oob = scales::squish, 
+                        name = "Sugar kelp density\n(ind. m⁻²)",
+                        guide = guide_colorbar(reverse = FALSE) ) +
+  labs(tag = "B") +
+  coord_sf(xlim = c(3, 34),
+           ylim = c(57.6, 72),
+           expand = FALSE)
+
 map2
 
-mapshot(map2, file = paste(maindir, "Figures/SaclatSampleMap_v3.png", sep = "/"), 
-        remove_controls = c("zoomControl", "layersControl"),
-        vwidth = 700, vheight = 744)
+ggsave("../Figures/SaclatSampleMap_v4.png", map2, width = 180, height = 200, dpi = 300, units = "mm") 
 
 
 # Sampling times and coverage
@@ -256,17 +289,17 @@ varnames_match <- setNames(c("Depth, m",  "Wave exposure, m2/s", "Curvature, m",
 varnames_lamhyp <- unname(varnames_match[lamhyp.manual.cut.gbm$contributions$var])
 
 png("../Figures/MarginalEffectsLamhyp.png", width = 2700, height = 1500, res = 300)
-par(mar=c(2.5,2,1.5,0), oma = c(1.5,2,0,1), mfrow = c(2,6))
+par(mar=c(2.5,1.5,1.5,0), oma = c(1.5,2,0,1), mfrow = c(2,6))
 gbm.plot.own(lamhyp.manual.cut.gbm, dat = lamhyp, varnames = varnames_lamhyp,
-             xrange_pres = TRUE, with_yax=c(1,6),species="tangle kelp", tag = "A")
+             xrange_pres = TRUE, with_yax=c(1,7),species="tangle kelp", tag = "A")
 dev.off()
 
 varnames_saclat <-  unname(varnames_match[saclat.simp.manual.gbm$contributions$var])
 
 png("../Figures/MarginalEffectsSaclat.png", width = 2700, height = 1500, res = 300)
-par(mar=c(2.5,2,1.5,0), oma = c(1.5,3,0,1), mfrow = c(2,6))
+par(mar=c(2.5,1.5,1.5,0), oma = c(1.5,2,0,1), mfrow = c(2,6))
 gbm.plot.own(saclat.simp.manual.gbm, dat = saclat, varnames = varnames_saclat, tag = "B",
-             xrange_pres = TRUE, with_yax=c(1,6),species="sugar kelp")
+             xrange_pres = TRUE, with_yax=c(1,7),species="sugar kelp")
 dev.off()
 
 # Plot only oxygen effect
@@ -384,7 +417,7 @@ gbm.perspec(saclat.simp.manual.gbm, 4, 3,
 # Map predictions ---------------------------------------------------------
 
 # Lamhyp downsample:
-#predfinal <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_full.grd")) 
+predfinal_full <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_full.grd")) 
 predfinal <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_crop40.grd")) 
 
 #hist(predfinal[predfinal > 0])
@@ -410,200 +443,210 @@ predfinal_sac <- rast(paste0(maindir,"\\Predictions\\predSACLATdens2022_crop40.g
 
 ## PLOT Lamhyp
 
-lamhyp_downsample <- rast("../Predictions/predLAMHYdens2022_downsample500.grd")
-
+lamhyp_downsample <- rast(paste0(maindir,"\\Predictions/predLAMHYdens2022_downsample500.grd"))
 
 #plot(lamhyp_downsample)
 lamhyp_plot <- project(lamhyp_downsample, "EPSG:4326", method = "bilinear")
-# Covnert to raster for leaflet::addRasterimage
-lamhyp_plot <- raster::raster(lamhyp_plot)
-lamhyp_plot[lamhyp_plot < 1] <- NA
-#ext(lamhyp_plot)
-vals <- raster::values(lamhyp_plot)
-rng <- range(vals, na.rm = TRUE)
+#lamhyp_plot[lamhyp_plot < 1] <- NA
+lamhyp_plot[lamhyp_plot < 1] <- 0
 
-tmap_mode(mode = "view")
-tm_shape(lamhyp_plot) +
-  tm_raster(style = "cont", palette = "Greens") +
-  tm_layout(title = "BRT model tangle kelp",
-            legend.outside = TRUE)
+# Convert to dataframe for ggplot
+lam_df <- as.data.frame(lamhyp_plot, xy = TRUE, na.rm = TRUE)
+colnames(lam_df)[3] <- "Tetthet"
 
-# Color gradients
-gradpal2 <- colorNumeric(palette = "Spectral", domain = rng, na.color = "transparent", reverse = TRUE)
+pal <- RColorBrewer::brewer.pal(9, "YlOrRd")
+lamhyp_lims <- c(0, 12)
+  
+map1 <- basemap +
+  geom_tile(data = lam_df,
+            aes(x = x, y = y, fill = Tetthet), 
+            width = 0.01, height = 0.01, alpha = 0.9) +
+  # scale_fill_distiller(palette = "YlOrRd",
+  #                      direction = 1,
+  #                      limits = c(1, 12),   
+  #                      oob = scales::squish, 
+  #                      name = "Predicted density\nof tangle kelp\n(ind. m⁻²)") +
+  scale_fill_gradientn(
+    colours = c("white", pal[3:9]),  
+    limits = lamhyp_lims,
+    oob = scales::squish,
+    name = "Predicted density\nof tangle kelp\n(ind. m⁻²)") +
+    labs(tag = "A") +
+  coord_sf(xlim = c(3, 34),
+           ylim = c(57.6, 72),
+           expand = FALSE) +
+  theme(legend.position = c(0.1, 0.82))
 
-predmap1 <- leaflet(lamhyp_plot,
-                  options = leafletOptions(
-                  attributionControl=FALSE,
-                  zoomControl = FALSE)) %>% # removed zoom control for better export to small image
-  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB.DarkMatter #Esri.WorldGrayCanvas
-  addRasterImage(lamhyp_plot, colors = gradpal2) %>% 
-  addLegend("bottomright", pal = gradpal2, values = vals,
-            title = "Predicted density </br> of tangle kelp </br> (ind.m<sup>-2</sup>)") %>% 
-  addControl(html = "<b style='font-size:20px;'>A</b>", position = "topleft") %>%
-  setView(lng = 16, lat = 65.5, zoom = 5)
-
-predmap1
-
-# Not working, too much data?
-# mapview::mapshot(predmap1, file = paste(maindir, "/Figures/LamhypBRTMap_v3_PLACEHOLDER.png", sep = "/"), 
-#         remove_controls = c("zoomControl", "layersControl"),
-#         vwidth = 700, vheight = 744, delay = 3)
-
-out_html <- file.path(paste(maindir, "/Figures/LamhypBRTMap_v3.html", sep = "/"))
-out_png  <- file.path(paste(maindir, "/Figures/LamhypBRTMap_v3.png", sep = "/"))
-
-htmlwidgets::saveWidget(predmap1, out_html, selfcontained = TRUE)
-webshot2::webshot(out_html, file = out_png, vwidth = 700, vheight = 744, delay = 3)
-
+map1
 
 ## PLOT Saclat
+saclat_downsample <-  rast(paste0(maindir,"\\Predictions/predSACLATdens2022_downsample500.grd"))
 
-saclat_downsample <- rast("../Predictions/predSACLATdens2022_downsample500.grd")
-
-#plot(saclat_downsample)
 saclat_plot <- project(saclat_downsample, "EPSG:4326", method = "bilinear")
-# Covnert to raster for leaflet::addRasterimage
-saclat_plot <- raster::raster(saclat_plot)
-saclat_plot[saclat_plot < 1] <- NA
-#extent(saclat_plot)
-vals <- raster::values(saclat_plot)
-rng <- range(vals, na.rm = TRUE)
+saclat_plot[saclat_plot < 1] <- 0
 
-tmap_mode(mode = "view")
-tm_shape(saclat_plot) +
-  tm_raster(style = "cont", palette = "Reds") +
-  tm_layout(title = "BRT model sugar kelp",
-            legend.outside = TRUE)
+sac_df <- as.data.frame(saclat_plot, xy = TRUE, na.rm = TRUE)
+colnames(sac_df)[3] <- "Tetthet"
 
-# Color gradients
-gradpal2_sac <- colorNumeric(palette = "Spectral", domain = rng, na.color = "transparent", reverse = TRUE)
+saclat_lims <- c(0, 7)
+  
+map2 <- basemap +
+  geom_tile(data = sac_df,
+            aes(x = x, y = y, fill = Tetthet), 
+            width = 0.01, height = 0.01, alpha = 0.9) +
+  # scale_fill_distiller(palette = "YlOrRd",
+  #                      direction = 1,
+  #                      limits = c(1, 6),   
+  #                      oob = scales::squish, 
+  #                      name = "Predicted density\nof sugar kelp\n(ind. m⁻²)") +
+  scale_fill_gradientn(
+    colours = c("white", pal[3:9]),  
+    limits = saclat_lims,
+    oob = scales::squish,
+    name = "Predicted density\nof sugar kelp\n(ind. m⁻²)") +
+    labs(tag = "B") +
+  coord_sf(xlim = c(3, 34),
+           ylim = c(57.6, 72),
+           expand = FALSE) +
+  theme(legend.position = c(0.1, 0.82))
 
-predmap2 <- leaflet(saclat_plot,
-                    options = leafletOptions(
-                      attributionControl=FALSE,
-                      zoomControl = FALSE)) %>% # removed zoom control for better export to small image
-  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB.DarkMatter #Esri.WorldGrayCanvas
-  addRasterImage(saclat_plot, colors = gradpal2_sac) %>% 
-  #addScaleBar("topleft")  %>%
-  addLegend("bottomright", pal = gradpal2_sac, values = values(saclat_plot),
-            title = "Predicted density </br> of sugar kelp </br> (ind. m<sup>-2</sup>)") %>% 
-  addControl(html = "<b style='font-size:20px;'>B</b>", position = "topleft") %>%
-  setView(lng = 16, lat = 65.5, zoom = 5)
-
-predmap2
-
-# Not working, too much data?
-# mapshot(predmap2, file = paste(maindir, "Figures/SaclatBRTMap.png", sep = "/"), 
-#         remove_controls = c("zoomControl", "layersControl"),
-#         vwidth = 700, vheight = 744)
-
-out_html <- file.path(paste(maindir, "/Figures/SaclatBRTMap_v3.html", sep = "/"))
-out_png  <- file.path(paste(maindir, "/Figures/SaclatBRTMap_v3.png", sep = "/"))
-
-htmlwidgets::saveWidget(predmap2, out_html, selfcontained = TRUE)
-webshot2::webshot(out_html, file = out_png, vwidth = 700, vheight = 744, delay = 3)
+map2
 
 
 # Zoomed in areas ----------------------------------------------------------
-ext_ll <- ext(5.35, 5.95, 62.25, 62.43) # Runde area
-ext_ll <- ext(12, 12.20, 65.8, 65.93) # Vega area
+bbox <- c(5.35, 5.95, 62.25, 62.43) # Runde area # xmin, ymin, xmax, ymax
+bbox <- c(4.7, 5.3, 61.65, 62.2) # Sognefjorden area?
+#bbox <- ext(12, 12.20, 65.8, 65.93) # Vega area
+ext_ll <- ext(bbox) 
 ext_poly  <- as.polygons(ext_ll, crs = "EPSG:4326")
-ext_poly2 <- project(ext_poly, crs(predfinal))     
-ext_new   <- ext(ext_poly2)
+ext_poly_utm <- project(ext_poly, crs(predfinal))     
+ext_new   <- ext(ext_poly_utm)
+
+coast_osm <- opq(bbox = c(bbox[c(2,4)],bbox[c(2,4)]), timeout = 200) %>%
+  add_osm_feature(key = "natural", value = "coastline") %>%
+  osmdata_sf()
+
+coast <- coast_osm$osm_lines
 
 # Crop
-lamhyp_plot_zoom <- crop(predfinal, ext_new)
+lamhyp_plot_zoom <- crop(predfinal_full, ext_new)
+
+# Fill in empty areas with 0s
+dem <- rast("D:/QGISprojects/EelgrassBlueConnect/input_GIS/BathyAndTerrain/DEM25Norge.tif")
+dem_zoom <- crop(dem, ext_new)
+dem_aligned <- resample(dem_zoom, lamhyp_plot_zoom, method = "near")
+
+lamhyp_plot_zoom[is.na(lamhyp_plot_zoom) & !is.na(dem_aligned) & dem_aligned <= (-40)] <- 0
+
 lamhyp_plot_zoom <- project(lamhyp_plot_zoom, "EPSG:4326", method = "bilinear")
-# Covnert to raster for leaflet::addRasterimage
-lamhyp_plot_zoom <- raster::raster(lamhyp_plot_zoom)
-lamhyp_plot_zoom[lamhyp_plot_zoom < 1] <- NA
 
-#ext(lamhyp_plot_zoom_zoom)
-vals <- raster::values(lamhyp_plot_zoom)
-rng <- range(vals, na.rm = TRUE)
-
-tmap_mode(mode = "view")
-tm_shape(lamhyp_plot_zoom) +
-  tm_raster(style = "cont", palette = "Greens") +
-  tm_layout(title = "BRT model tangle kelp",
-            legend.outside = TRUE)
-
-# Color gradients
-gradpal2 <- colorNumeric(palette = "Spectral", domain = rng, na.color = "transparent", reverse = TRUE)
-
-# Runde:
-lng_zoom <- 5.6
-lat_zoom <- 62.35
-zoom <- 11.5
-
-# Vega:
-lng_zoom <- 12.12
-lat_zoom <- 65.91
-zoom <- 10
-
-predmap1 <- leaflet(lamhyp_plot_zoom,
-                    options = leafletOptions(
-                      attributionControl=FALSE,
-                      zoomControl = FALSE)) %>% # removed zoom control for better export to small image
-  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB.DarkMatter #Esri.WorldGrayCanvas
-  addRasterImage(lamhyp_plot_zoom, colors = gradpal2) %>% 
-  addLegend("bottomright", pal = gradpal2, values = vals,
-            title = "Predicted density </br> of tangle kelp </br> (ind.m<sup>-2</sup>)") %>% 
-  addControl(html = "<b style='font-size:20px;'>A</b>", position = "topleft") %>%
-  setView(lng = lng_zoom, lat = lat_zoom, zoom = zoom)
-
-predmap1
-
-out_html <- file.path(paste(maindir, "/Figures/LamhypBRTMapZoom_v3.html", sep = "/"))
-out_png  <- file.path(paste(maindir, "/Figures/LamhypBRTMapZoom_v3.png", sep = "/"))
-
-htmlwidgets::saveWidget(predmap1, out_html, selfcontained = TRUE)
-webshot2::webshot(out_html, file = out_png, vwidth = 700, vheight = 744, delay = 3)
+#lamhyp_plot_zoom[lamhyp_plot_zoom < 1] <- NA
+lam_zoom_df <- as.data.frame(lamhyp_plot_zoom, xy = TRUE, na.rm = TRUE)
+colnames(lam_zoom_df)[3] <- "Tetthet"
+lam_zoom_df$Tetthet[lam_zoom_df$Tetthet < 1] <- 0
 
 
+map1_zoom <- ggplot() +
+  theme_void() +  
+  geom_tile(data = lam_zoom_df,
+            aes(x = x, y = y, fill = Tetthet),
+            alpha = 0.85) +
+  # geom_sf(data = coast, color = "white", linewidth = 0.6) + 
+  # geom_sf(data = coast, color = "black", linewidth = 1.0) +   
+  scale_fill_gradientn(
+    colours = c("white", pal[3:9]),
+    limits = lamhyp_lims,
+    oob = scales::squish) +
+  coord_sf(xlim = bbox[c(1,2)],
+           ylim = bbox[c(3,4)],
+           expand = FALSE) +
+  theme(legend.position = "none",
+        panel.background = element_rect(fill = "grey", color = NA),  
+        plot.background  = element_rect(fill = "grey", color = NA),
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8))
+
+map1_zoom
+
+connect_line <- data.frame(x = c(5.5, 18),  y = c(61.9, 61))
+
+map_combined <- map1 +
+  annotate("rect",
+    xmin = bbox[1],xmax = bbox[2], ymin = bbox[3], ymax = bbox[4], fill = NA,
+    color = "black",
+    linewidth = 1.2) +
+  geom_path(data = connect_line,
+            aes(x = x, y = y),
+            linetype = "dashed",
+            color = "grey40") +
+ inset_element(map1_zoom,
+                left = 0.31,
+                bottom = 0.01,
+                right = 0.98,
+                top = 0.52)
+  
+#map_combined
+
+ggsave("../Figures/LamhypBRTMap_TEST.png", map_combined, width = 180, height = 200, dpi = 300, units = "mm") 
 
 saclat_plot_zoom <- crop(predfinal_sac, ext_new)
+#dem_zoom <- crop(dem, ext_new)
+#dem_aligned <- resample(dem_zoom, saclat_plot_zoom, method = "near")
+
+saclat_plot_zoom[is.na(saclat_plot_zoom) & !is.na(dem_aligned) & dem_aligned <= (-40)] <- 0
+
+#writeRaster(saclat_plot_zoom,  filename = paste0(maindir, "\\Predictions\\saclat_plot_zoom.grd"), overwrite = TRUE)
+
 saclat_plot_zoom <- project(saclat_plot_zoom, "EPSG:4326", method = "bilinear")
-# Covnert to raster for leaflet::addRasterimage
-saclat_plot_zoom <- raster::raster(saclat_plot_zoom)
-saclat_plot_zoom[saclat_plot_zoom < 0] <- NA
+sac_zoom_df <- as.data.frame(saclat_plot_zoom, xy = TRUE, na.rm = TRUE)
+colnames(sac_zoom_df)[3] <- "Tetthet"
+sac_zoom_df$Tetthet[sac_zoom_df$Tetthet < 1] <- 0
 
-#ext(saclat_plot_zoom_zoom)
-vals <- raster::values(saclat_plot_zoom)
-rng <- range(vals, na.rm = TRUE)
+map2_zoom <- ggplot() +
+  theme_void() +  
+  geom_tile(data = sac_zoom_df,
+            aes(x = x, y = y, fill = Tetthet),
+            alpha = 0.85) +
+  # geom_sf(data = coast, color = "white", linewidth = 0.6) + 
+  # geom_sf(data = coast, color = "black", linewidth = 1.0) +   
+  scale_fill_gradientn(
+    colours = c("white", pal[3:9]),
+    limits = saclat_lims,
+    oob = scales::squish) +
+  coord_sf(xlim = bbox[c(1,2)],
+           ylim = bbox[c(3,4)],
+           expand = FALSE) +
+  theme(legend.position = "none",
+        panel.background = element_rect(fill = "grey", color = NA),  
+        plot.background  = element_rect(fill = "grey", color = NA),
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8))
 
-tmap_mode(mode = "view")
-tm_shape(saclat_plot_zoom) +
-  tm_raster(style = "cont", palette = "Greens") +
-  tm_layout(title = "BRT model tangle kelp",
-            legend.outside = TRUE)
+#map2_zoom
 
-gradpal2 <- colorNumeric(palette = "Spectral", domain = rng, na.color = "transparent", reverse = TRUE)
+map_combined2 <- map2 +
+  annotate("rect",
+           xmin = bbox[1],xmax = bbox[2], ymin = bbox[3], ymax = bbox[4], fill = NA,
+           color = "black",
+           linewidth = 1.2) +
+  geom_path(data = connect_line,
+            aes(x = x, y = y),
+            linetype = "dashed",
+            color = "grey40") +
+  inset_element(map2_zoom,
+                left = 0.31,
+                bottom = 0.01,
+                right = 0.98,
+                top = 0.52)
+#map_combined2
 
-predmap2 <- leaflet(saclat_plot_zoom,
-                    options = leafletOptions(
-                      attributionControl=FALSE,
-                      zoomControl = FALSE)) %>% # removed zoom control for better export to small image
-  addProviderTiles(providers$Esri.WorldGrayCanvas) %>% #CartoDB.DarkMatter #Esri.WorldGrayCanvas
-  addRasterImage(saclat_plot_zoom, colors = gradpal2) %>% 
-  addLegend("bottomright", pal = gradpal2, values = vals,
-            title = "Predicted density </br> of sugar kelp </br> (ind.m<sup>-2</sup>)") %>% 
-  addControl(html = "<b style='font-size:20px;'>B</b>", position = "topleft") %>%
-  setView(lng = lng_zoom, lat = lat_zoom, zoom = 11.5)
+ggsave("../Figures/SaclatBRTMap_v4.png", map_combined2, width = 180, height = 200, dpi = 300, units = "mm") 
 
-predmap2
-
-out_html <- file.path(paste(maindir, "/Figures/SaclatBRTMapZoom_v3.html", sep = "/"))
-out_png  <- file.path(paste(maindir, "/Figures/SaclatBRTMapZoom_v3.png", sep = "/"))
-
-htmlwidgets::saveWidget(predmap2, out_html, selfcontained = TRUE)
-webshot2::webshot(out_html, file = out_png, vwidth = 700, vheight = 744, delay = 3)
 
 
 # Area summaries ----------------------------------------------------------
 # Estimate area depending on threshold
 #predfinal_full <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_full.grd")) 
-predfinal_crop <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_crop40.grd")) 
+predfinal <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_crop40.grd")) 
+predfinal_sac <- rast(paste0(maindir,"\\Predictions\\predSACLATdens2022_crop40.grd"))
 
 # Old method, faster but somewhat less precise:
 # lamhyp_rastertable_crop <- freq(predfinal_crop)
@@ -614,10 +657,10 @@ predfinal_crop <- rast(paste0(maindir,"\\Predictions\\predLAMHYdens2022_crop40.g
 #          area_km = area_m/1e+06) %>%
 #   mutate(area_km_sum = rev(cumsum(rev(area_km))))
 
-cell_area_m2 <- prod(res(predfinal_crop))  # m² per cell
+cell_area_m2 <- prod(res(predfinal))  # m² per cell
 
 # Laminaria:
-r_max <- global(predfinal_crop, "max", na.rm = TRUE)[1, 1]
+r_max <- global(predfinal, "max", na.rm = TRUE)[1, 1]
 thresholds <- seq(from = 1, to   = floor(r_max),  by   = 1)
 
 lamhyp_rastertable <- tibble(value = thresholds) %>%
@@ -625,7 +668,7 @@ lamhyp_rastertable <- tibble(value = thresholds) %>%
       value,
       function(v) {
         global(
-          predfinal_crop >= v & predfinal_crop < (v + 1),
+          predfinal >= v & predfinal < (v + 1),
           "sum",
           na.rm = TRUE
         )[1, 1]
@@ -635,7 +678,7 @@ lamhyp_rastertable <- tibble(value = thresholds) %>%
     count_ge = vapply(
       value,
       function(v) {
-        global(predfinal_crop >= v, "sum", na.rm = TRUE)[1, 1]
+        global(predfinal >= v, "sum", na.rm = TRUE)[1, 1]
       },
       numeric(1)
     ),
@@ -676,6 +719,20 @@ saclat_rastertable <- tibble(value = thresholds) %>%
 
 write.csv(saclat_rastertable, file = "../Tables/saclat_rastertable_full.csv", row.names = FALSE)
 
+
+comb_rastertable_ms <- lamhyp_rastertable %>%
+  dplyr::select(c(value, area_km, area_km_cum)) %>%
+  left_join(saclat_rastertable  %>%
+              dplyr::select(c(value, area_km, area_km_cum)), by = "value") %>%
+  mutate(across(where(is.numeric), round, 3)) %>%
+  rename(Threshold = value,
+         "Area at value" = area_km.x,
+         "Area ≥ value" = area_km_cum.x,
+         "Area at value.y" = area_km.y,
+         "Area ≥ value.y" = area_km_cum.y)
+
+write.csv(comb_rastertable_ms, file = "../Tables/comb_rastertable_ms.csv", row.names = FALSE)
+
 lamhyp_rastertable <- read.csv("../Tables/lamhyp_rastertable_full.csv")
   
 saclat_rastertable <- read.csv("../Tables/saclat_rastertable_full.csv")  
@@ -693,33 +750,37 @@ area_lim_lam_1 <- lamhyp_rastertable %>%
   filter(value == 1) %>%
   pull(area_km_cum)
 
+lamhyp_rastertable_plot <- lamhyp_rastertable %>% 
+  filter(value < 14)
 
-areaplot_lam <- lamhyp_rastertable %>% 
+areaplot_lam <- lamhyp_rastertable_plot %>%
   ggplot(aes(x = value)) +
   geom_line(aes(y = area_km_cum), color = "steelblue", linewidth = 1) +
   geom_point(aes(y = area_km_cum), color = "steelblue") +
-  geom_vline(xintercept = 5, color = "grey40", linewidth = 0.9, linetype = "dashed") +
-  geom_hline(yintercept = area_lim_lam_5, color = "grey40", linewidth = 0.9, linetype = "dashed") +
-  geom_hline(yintercept = area_lim_lam_1, color = "grey40", linewidth = 0.9, linetype = "dashed") +
+  geom_hline(yintercept = area_lim_lam_5, color = "grey20", linewidth = 0.9, linetype = "dashed") +
+  geom_hline(yintercept = area_lim_lam_1, color = "grey80", linewidth = 0.9, linetype = "dashed") +
+  geom_col(aes(x = value, y = area_km), fill = "steelblue", alpha = 0.75, width = 0.5) +
   annotate("text",
-           x = max(lamhyp_rastertable$value) * 0.98,   
+           x = max(lamhyp_rastertable_plot$value) * 0.98,   
            y = area_lim_lam_5,
-           label = paste0("Area = ", round(area_lim_lam_5), " km²"),
+           label = paste0(round(area_lim_lam_5), " km²"),
            vjust = -0.5, hjust = 1, size = 4) +
   annotate("text",
-           x = max(lamhyp_rastertable$value) * 0.98,
+           x = max(lamhyp_rastertable_plot$value) * 0.98,
            y = area_lim_lam_1,
-           label = paste0("Area = ", round(area_lim_lam_1), " km²"),
+           label = paste0(round(area_lim_lam_1), " km²"),
            vjust = -0.5, hjust = 1, size = 4) +
   # dual y-axis
-  scale_y_continuous(name = "Predicted extent (km²)",
+  scale_y_continuous(name = "Predicted spatial extent (km²)",
                      sec.axis = sec_axis(trans = ~ 100 * (. - area_lim_lam_5) / area_lim_lam_5)) +
-  labs(x = "Density threshold (ind. m⁻²)", title = "Tangle kelp",
+  labs(x = "Density threshold (≥ ind. m⁻²)", title = "Tangle kelp",
        tag = "A.") +
   theme_bw(base_size = 14) +
   theme(panel.grid.minor = element_line(color = "grey90"),
     plot.tag = element_text(size = 18, face = "bold"),
-    plot.tag.position = c(0.02, 0.98) )
+    plot.tag.position = c(0.02, 0.98))
+
+areaplot_lam
 
 area_sac_1_to_7 <- saclat_rastertable %>%
   filter(value < 7) %>%
@@ -734,32 +795,37 @@ area_lim_sac_1 <- saclat_rastertable %>%
   filter(value == 1) %>%
   pull(area_km_cum)
 
-areaplot_sac <- saclat_rastertable %>%
+saclat_rastertable_plot <- saclat_rastertable %>% 
+  filter(value < 14)
+
+areaplot_sac <- saclat_rastertable_plot %>%
   ggplot(aes(x = value)) +
   geom_line(aes(y = area_km_cum), color = "steelblue", linewidth = 1) +
   geom_point(aes(y = area_km_cum), color = "steelblue") +
-  geom_vline(xintercept = 7, color = "grey40", linewidth = 0.9, linetype = "dashed") +
-  geom_hline(yintercept = area_lim_sac_1, color = "grey40", linewidth = 0.9, linetype = "dashed") +
-  geom_hline(yintercept = area_lim_sac_7, color = "grey40", linewidth = 0.9, linetype = "dashed") +
+  geom_hline(yintercept = area_lim_sac_1, color = "grey80", linewidth = 0.9, linetype = "dashed") +
+  geom_hline(yintercept = area_lim_sac_7, color = "grey20", linewidth = 0.9, linetype = "dashed") +
+  geom_col(aes(x = value, y = area_km), fill = "steelblue", alpha = 0.75, width = 0.5) +
   annotate("text",
-           x = max(saclat_rastertable$value) * 0.98,   
+           x = max(saclat_rastertable_plot$value) * 0.98,   
            y = area_lim_sac_7,
-           label = paste0("Area = ", round(area_lim_sac_7), " km²"),
+           label = paste0(round(area_lim_sac_7), " km²"),
            vjust = -0.5, hjust = 1, size = 4) +
   annotate("text",
-           x = max(saclat_rastertable$value) * 0.98,
+           x = max(saclat_rastertable_plot$value) * 0.98,
            y = area_lim_sac_1,
-           label = paste0("Area = ", round(area_lim_sac_1), " km²"),
+           label = paste0(round(area_lim_sac_1), " km²"),
            vjust = -0.5, hjust = 1, size = 4) +
   # dual y-axis
   scale_y_continuous(name = "",
                      sec.axis = sec_axis(trans = ~ 100 * (. - area_lim_sac_7) / area_lim_sac_7,
-                                         name = "Change in estimated extent (%)")) +
-  labs(x = "Density threshold (ind. m⁻²)", tag = "B", title = "Sugar kelp") +
+                                         name = "Change in predicted extent (%)")) +
+  labs(x = "Density threshold (≥ ind. m⁻²)", tag = "B", title = "Sugar kelp") +
   theme_bw(base_size = 14) + 
   theme(panel.grid.minor = element_line(color = "grey90"),
         plot.tag = element_text(size = 18, face = "bold"),
         plot.tag.position = c(0.02, 0.98))
+
+areaplot_sac
 
 areaplot <- areaplot_lam + areaplot_sac
 
@@ -767,18 +833,6 @@ ggsave(areaplot, path = "../Figures",
        filename = "arealestimates.png",
        device = "png", width = 30, height = 15, units = "cm")
 
-
-# Histograms as in the Blue Carbon report for comparison:
-
-lamhyp_rastertable %>% 
-  ggplot(aes(x = value, y = area_km)) +
-  geom_col(fill = "steelblue") +
-  labs(x = "Density (ind. m⁻²)", y = "Predicted extent of tangle kelp (km²)", tag = "A") +
-  scale_y_continuous(breaks = seq(0, 12000, by = 1000)) +
-  theme_bw(base_size = 14) + 
-  theme(panel.grid.minor = element_line(color = "grey90"),
-        plot.tag = element_text(size = 18, face = "bold"),
-        plot.tag.position = c(0.02, 0.98))
 
 saclat_rastertable %>% 
   ggplot(aes(x = value, y = area_km)) +
@@ -791,41 +845,124 @@ saclat_rastertable %>%
         plot.tag = element_text(size = 18, face = "bold"),
         plot.tag.position = c(0.02, 0.98))
 
+
 # Biomass estimates ----------------------------------------------------------
 
+tot_kg_LAMHY <-rast(paste0(maindir, "\\Predictions\\tot_kg_LAMHY.grd"))
 
-# Add biomass for lamhyp
+# Total weight - BUT INCLUDES AREAS WITH < IND/M2!
+# sumLAMHY <- global(tot_kg_LAMHY, "sum", na.rm = TRUE)[1, 1]
+# sumLAMHY # kg
+# sumLAMHY / 1e6 # in Gg
 
-zonalLAMHYdens_kg <- read.csv("../Tables/zonalLAMHYdens_kg.csv") %>% 
-  filter(Category != 0)  %>% 
-  mutate(densities = ifelse(Category == 1, "1 - 4", ">= 5")) %>% 
-  mutate(Biomass_milltonn = Biomass_kg/1000000000)
-str(zonalLAMHYdens_kg)
+# Sum biomass per density category (integer)
+density_class <- floor(predfinal)
+density_class[density_class < 1] <- NA
+density_class[density_class > 35] <- 35
 
-lamhyp_rastertable %>% data.frame %>% 
-  mutate(forest = ifelse(value >= 5, 1L, 0L)) %>%
-  group_by(forest) %>% 
-  summarise(N = sum(count), Area_km = sum(area_km)) %>% 
-  add_column(densities = 0L, .after = "forest") %>%
-  mutate(densities = ifelse(forest == 1, ">= 5", "1 - 4")) %>%
-  dplyr::select(-forest) %>% data.frame() %>% 
-  left_join(zonalLAMHYdens_kg) %>% 
-  dplyr::select(-c(Biomass_kg)) %>% 
-  write.csv(., file = "../Tables/lamhyp_rastertable_2026.csv", row.names = FALSE)
+biom_eq <- zonal(tot_kg_LAMHY, density_class, fun = "sum", na.rm = TRUE)
 
-saclat_rastertable %>% 
-  mutate(forest = ifelse(value >= 7, 1L, 0L)) %>%
-  group_by(forest) %>% 
-  summarise(Area_km = sum(area_km)) %>% 
-  add_column(densities = 0L, .after = "forest") %>%
-  mutate(densities = ifelse(forest == 1, ">= 7", "1 - 6")) %>%
-  dplyr::select(-forest) %>%  
-  print %>% 
-  write.csv(., file = "../Tables/saclat_rastertable_2026.csv", row.names = FALSE)
+biom_eq <- biom_eq %>%
+  rename(Threshold = layer, Biomass_kg = layer.1)  %>%
+  mutate(Biomass_Gg = Biomass_kg / 1e6) %>%
+  arrange(desc(Threshold)) %>%
+  mutate(Biomass_Gg_cum= cumsum(Biomass_Gg)) %>%
+  arrange(Threshold) %>%
+  mutate(C_Gg = Biomass_Gg*0.15*0.31, C_Gg_cum = Biomass_Gg_cum*0.15*0.31) 
+  
+# Join with areal estimates
+lamhyp_appendixtable <- lamhyp_rastertable %>%    
+  rename(Threshold = value)  %>%
+  dplyr::select(-c(count_eq,count_ge)) %>%
+  left_join(biom_eq) %>%
+  dplyr::select(-c(Biomass_kg))%>%
+  dplyr::select(Threshold,area_km, Biomass_Gg, C_Gg, area_km_cum, Biomass_Gg_cum, C_Gg_cum)
 
-# Sjekk Frigstad et al ...
-# Extreme differences in the predictions of S. latissima forest areas
-# I do trust this model more than the previous (range of values etc. seems much more realistic)
-# Har dobbeltsjekka med å regne ut i excel og kommer til samme arealer
+# Splitting the estimate into forest and non-forest
+zonalLAMHYdens <- lamhyp_appendixtable %>%
+  dplyr::select(Threshold, area_km, Biomass_Gg,C_Gg) %>%
+  mutate(Density = case_when(
+    Threshold %in% 1:4 ~ "Low density (1–4)",
+    Threshold >= 5     ~ "High density (≥5)")) %>%
+  group_by(Density) %>%
+  summarise(Area_km = sum(area_km, na.rm = TRUE),
+    Biomass_Gg = sum(Biomass_Gg, na.rm = TRUE),
+    C_Gg = sum(C_Gg, na.rm = TRUE),.groups = "drop") %>%
+  bind_rows(summarise(., across(where(is.numeric), sum), Density = "Total (≥1)") ) 
+
+lamhyp_appendixtable <- lamhyp_appendixtable %>%    
+  mutate(across(-Threshold, ~ ifelse(. < 1, number(., accuracy = 0.001, trim = TRUE), number(., accuracy = 1, trim = TRUE)))) 
+
+write.csv(lamhyp_appendixtable, file = "../Tables/lamhyp_appendixtable.csv", row.names = FALSE)
+
+zonalLAMHYdens <- zonalLAMHYdens %>%    
+  mutate(across(-Density, ~ ifelse(. < 1, number(., accuracy = 0.001, trim = TRUE), number(., accuracy = 1, trim = TRUE)))) 
+
+write.csv(zonalLAMHYdens, file = "../Tables/zonalLAMHYdens_Gg_2026.csv", row.names = FALSE)
+
+tot_kg_SACLA <-rast(paste0(maindir, "\\Predictions\\tot_kg_SACLA.grd"))
+
+# Sum biomass per density category (integer)
+density_class <- floor(predfinal_sac)
+density_class[density_class < 1] <- NA
+density_class[density_class > 21] <- 21
+
+biom_eq <- zonal(tot_kg_SACLA, density_class, fun = "sum", na.rm = TRUE)
+
+biom_eq <- biom_eq %>%
+  rename(Threshold = layer, Biomass_kg = layer.1)  %>%
+  mutate(Biomass_Gg = Biomass_kg / 1e6) %>%
+  arrange(desc(Threshold)) %>%
+  mutate(Biomass_Gg_cum= cumsum(Biomass_Gg)) %>%
+  arrange(Threshold) %>%
+  mutate(C_Gg = Biomass_Gg*0.15*0.31, C_Gg_cum = Biomass_Gg_cum*0.15*0.31) 
+
+# Join with areal estimates
+saclat_appendixtable <- saclat_rastertable %>%    
+  rename(Threshold = value)  %>%
+  dplyr::select(-c(count_eq,count_ge)) %>%
+  left_join(biom_eq) %>%
+  dplyr::select(-c(Biomass_kg))%>%
+  dplyr::select(Threshold,area_km, Biomass_Gg, C_Gg, area_km_cum, Biomass_Gg_cum, C_Gg_cum)
+
+# Splitting the estimate into forest and non-forest
+zonalSACLAdens <- saclat_appendixtable %>%
+  dplyr::select(Threshold, area_km, Biomass_Gg,C_Gg) %>%
+  mutate(Density = case_when(
+    Threshold %in% 1:6 ~ "Low density (1–6)",
+    Threshold >= 7     ~ "High density (≥7)")) %>%
+  group_by(Density) %>%
+  summarise(Area_km = sum(area_km, na.rm = TRUE),
+            Biomass_Gg = sum(Biomass_Gg, na.rm = TRUE),
+            C_Gg = sum(C_Gg, na.rm = TRUE),.groups = "drop") %>%
+  bind_rows(summarise(., across(where(is.numeric), sum), Density = "Total (≥1)") ) 
+
+saclat_appendixtable <- saclat_appendixtable %>%    
+  mutate(across(-Threshold, ~ ifelse(. < 1, number(., accuracy = 0.001, trim = TRUE), number(., accuracy = 1, trim = TRUE)))) 
+
+write.csv(saclat_appendixtable, file = "../Tables/saclat_appendixtable.csv", row.names = FALSE)
+
+zonalSACLAdens <- zonalSACLAdens %>%    
+  mutate(across(-Density, ~ ifelse(. < 1, number(., accuracy = 0.001, trim = TRUE), number(., accuracy = 1, trim = TRUE)))) 
+
+write.csv(zonalSACLAdens, file = "../Tables/zonalSACLAdenss_Gg_2026.csv", row.names = FALSE)
+
+
+# Carbon / production estimates ----------------------------------------------------------
+# NPP: 309 g  C m-2 y-1 (147–581) 
+# # Gg C y-1:
+# (area_lim_lam_5 * 1e6 * 309)/ 1e+9
+# #Tg C y-1
+# (area_lim_lam_5 * 1e6 * 147) / 1e12
+# (area_lim_lam_5 * 1e6 * 309) / 1e12
+# (area_lim_lam_5 * 1e6 * 581) / 1e12
+
+# CC: 87 (19-81) g C m-2 y-1
+# Gg C y-1:
+(area_lim_lam_5 * 1e6 * 19)/ 1e9 # Lower
+(area_lim_lam_5 * 1e6 * 68)/ 1e9 # Mean
+(area_lim_lam_5 * 1e6 * 81)/ 1e9
+
+
 
 

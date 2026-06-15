@@ -2,7 +2,7 @@
 # Modified from Kristina Kviles version
 
 gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, tag = "A", xrange_pres = FALSE,
-                         s.col = "aquamarine4",ylim = c(-1,1), varnames=NULL, showmean = TRUE, 
+                         s.col = "aquamarine4",ylims = c(-1,1), varnames=NULL, showmean = TRUE, 
                          with_yax=c(1,7),species="kelp") 
 {
   
@@ -15,13 +15,13 @@ gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, tag = "A", 
     k <- match(gbm.object$contributions$var[j],gbm.object$gbm.call$predictor.names)
     varname <- varnames[j]
     contrib <- gbm.object$contributions$rel.inf[j]
-    xlab <- paste0(varname, " (", round(contrib), "%)")
+    xlab <- varname
     response.matrix <- gbm::plot.gbm(gbm.object, k, return.grid = TRUE)
     response.matrix[,2] <- response.matrix[,2] - mean(response.matrix[,2])
     smoothed <- loess(response.matrix[,2] ~ response.matrix[,1], span = 0.3)
-    print(varname)
+    #print(varname)
     idx <- which.min(abs(response.matrix$y))
-    print(response.matrix[[1]][idx])
+    #print(response.matrix[[1]][idx])
     
     vardat <- dat[, gbm.object$gbm.call$gbm.x[k]]
     vardat_pres <- vardat[dat$Tetthet>0]
@@ -33,11 +33,14 @@ gbm.plot.own <- function(gbm.object, dat, smooth = TRUE, rug = TRUE, tag = "A", 
       xlims =  range(vardat, na.rm=T)}
     
     if (j%in%with_yax){
-      plot(response.matrix, type="l", ylab="", xlab=xlab, xlim = xlims, ylim = ylim, col=s.col, lwd = 1);
-      mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2.5)
+      plot(response.matrix, type="l", ylab="", xlab=xlab, xlim = xlims, ylim = ylims, col=s.col, lwd = 1);
+      mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2);
+      mtext(side = 3, adj = 0.05, padj = 2, paste0(round(contrib), "%"),cex = 0.7)
     }else{
-      plot(response.matrix, type="l", ylab="", xlab=xlab, xlim = xlims, ylim = ylim, col=s.col,  axes=FALSE,frame=TRUE, lwd = 1);
-      Axis(side=1);Axis(side=2,labels = FALSE);mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2.5)}
+      plot(response.matrix, type="l", ylab="", xlab=xlab, xlim = xlims, ylim = ylims, col=s.col,  axes=FALSE,frame=TRUE, lwd = 1);
+      mtext(side = 3, adj = 0.05, padj = 2, paste0(round(contrib), "%"),cex = 0.7)
+      Axis(side=1);Axis(side=2,labels = FALSE);
+      mtext(side=1, xlab, outer = FALSE, cex = 0.7, line = 2)}
     if(smooth){points(response.matrix[,1],smoothed$fitted, type = "l", lwd=2)}
     if(rug){rug(vardat_pres, col=s.col)}
     if(showmean){abline(v = vardat_mean, col=s.col, lty="dotted", , lwd = 0.75)}
